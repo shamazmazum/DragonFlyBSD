@@ -916,7 +916,7 @@ vn_ioctl(struct file *fp, u_long com, caddr_t data, struct ucred *ucred,
 			error = 0;
 			break;
 		}
-		if (com == FIOASYNC) {				/* XXX */
+		if (com == FIOASYNC || com == FIONBIO) {	/* XXX */
 			error = 0;				/* XXX */
 			break;
 		}

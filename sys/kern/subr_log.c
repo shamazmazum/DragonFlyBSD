@@ -281,6 +281,9 @@ logioctl(struct dev_ioctl_args *ap)
 		*(int *)ap->a_data = n;
 		break;
 
+	case FIONBIO:
+		break;
+
 	case FIOASYNC:
 		if (*(int *)ap->a_data)
 			atomic_set_int(&logsoftc.sc_state, LOG_ASYNC);

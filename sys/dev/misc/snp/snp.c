@@ -590,6 +590,9 @@ snpioctl(struct dev_ioctl_args *ap)
 			snp->snp_flags &= ~SNOOP_ASYNC;
 		break;
 
+	case FIONBIO:
+		break;
+
 	case FIONREAD:
 		crit_enter();
 		if (snp->snp_tty != NULL)

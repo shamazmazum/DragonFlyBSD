@@ -954,6 +954,9 @@ bpfioctl(struct dev_ioctl_args *ap)
 		d->bd_async = *(int *)ap->a_data;
 		break;
 
+	case FIONBIO:
+		break;
+
 	case FIOSETOWN:
 		error = fsetown(*(int *)ap->a_data, &d->bd_sigio);
 		break;

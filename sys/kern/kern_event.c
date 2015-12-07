@@ -1340,6 +1340,9 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 	lwkt_gettoken(tok);
 
 	switch(com) {
+	case FIONBIO:
+		error = 0;
+		break;
 	case FIOASYNC:
 		if (*(int *)data)
 			kq->kq_state |= KQ_ASYNC;

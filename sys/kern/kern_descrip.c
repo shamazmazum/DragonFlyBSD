@@ -311,6 +311,11 @@ kern_fcntl(int fd, int cmd, union fcntl_dat *dat, struct ucred *cred)
 			error = fo_ioctl(fp, FIOASYNC, (caddr_t)&tmp,
 					 cred, NULL);
 		}
+        if (error == 0 && ((nflags ^ oflags) & FNONBLOCK)) {
+			tmp = nflags & FNONBLOCK;
+			error = fo_ioctl(fp, FIONBIO, (caddr_t)&tmp,
+					 cred, NULL);
+		}
 
 		/*
 		 * If no error, must be atomically set.
