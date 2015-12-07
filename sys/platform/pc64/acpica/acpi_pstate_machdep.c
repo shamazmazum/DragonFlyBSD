@@ -55,8 +55,7 @@
 #define AMD_MSR_PSTATE_EN		0x8000000000000000ULL
 
 #define AMD1X_MSR_PSTATE_START		0xc0010064
-#define AMD10_MSR_PSTATE_COUNT		5
-#define AMD11_MSR_PSTATE_COUNT		8	/* starting from 11h */
+#define AMD1X_MSR_PSTATE_LIMIT		0xc0010061
 
 #define AMD0F_PST_CTL_FID(cval)		(((cval) >> 0)  & 0x3f)
 #define AMD0F_PST_CTL_VID(cval)		(((cval) >> 6)  & 0x1f)
@@ -68,6 +67,8 @@
 
 #define AMD0F_PST_ST_FID(sval)		(((sval) >> 0) & 0x3f)
 #define AMD0F_PST_ST_VID(sval)		(((sval) >> 6) & 0x3f)
+
+#define AMD1X_GET_PSTATE_LIMIT(val) ((val >> 4) & 0x07)
 
 #define INTEL_MSR_MISC_ENABLE		0x1a0
 #define INTEL_MSR_MISC_EST_EN		0x10000ULL
@@ -142,8 +143,6 @@ static const struct acpi_pst_md acpi_pst_intel = {
 static int acpi_pst_stringent_check = 1;
 TUNABLE_INT("hw.acpi.cpu.pstate.strigent_check", &acpi_pst_stringent_check);
 
-static int acpi_pst_amd1x_msr_pstate_count = AMD10_MSR_PSTATE_COUNT;
-
 const struct acpi_pst_md *
 acpi_pst_md_probe(void)
 {
@@ -174,10 +173,6 @@ acpi_pst_amd_probe(void)
 		if ((regs[3] & 0x06) == 0x06)
 			return &acpi_pst_amd0f;
 	} else if (CPUID_TO_FAMILY(cpu_id) >= 0x10) {	/* Family >= 10h */
-		if (CPUID_TO_FAMILY(cpu_id) >= 0x11) {
-			acpi_pst_amd1x_msr_pstate_count =
-			    AMD11_MSR_PSTATE_COUNT;
-		}
 		if (regs[3] & 0x80)
 			return &acpi_pst_amd1x;
 	}
@@ -237,15 +232,20 @@ acpi_pst_amd1x_check_pstates1(const struct acpi_pstate *pstates, int npstates,
 static int
 acpi_pst_amd1x_check_pstates(const struct acpi_pstate *pstates, int npstates)
 {
-	if (npstates > acpi_pst_amd1x_msr_pstate_count) {
+	uint64_t val;
+	uint32_t limit;
+
+	val = rdmsr (AMD1X_MSR_PSTATE_LIMIT);
+	limit = AMD1X_GET_PSTATE_LIMIT(val)+1;
+	if (npstates > limit) {
 		kprintf("cpu%d: only %d P-states are allowed\n", mycpuid,
-		    acpi_pst_amd1x_msr_pstate_count);
+		    limit);
 		return EINVAL;
 	}
 
 	return acpi_pst_amd1x_check_pstates1(pstates, npstates,
-	    AMD1X_MSR_PSTATE_START,
-	    AMD1X_MSR_PSTATE_START + acpi_pst_amd1x_msr_pstate_count);
+		AMD1X_MSR_PSTATE_START,
+		AMD1X_MSR_PSTATE_START + limit);
 }
 
 static int
