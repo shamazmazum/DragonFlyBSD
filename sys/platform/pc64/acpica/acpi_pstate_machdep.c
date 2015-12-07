@@ -54,8 +54,8 @@
 
 #define AMD_MSR_PSTATE_EN		0x8000000000000000ULL
 
-#define AMD10_MSR_PSTATE_START		0xc0010064
-#define AMD10_MSR_PSTATE_COUNT		5
+#define AMD1X_MSR_PSTATE_START		0xc0010064
+#define AMD1X_MSR_PSTATE_LIMIT		0xc0010061
 
 #define AMD0F_PST_CTL_FID(cval)		(((cval) >> 0)  & 0x3f)
 #define AMD0F_PST_CTL_VID(cval)		(((cval) >> 6)  & 0x1f)
@@ -67,6 +67,8 @@
 
 #define AMD0F_PST_ST_FID(sval)		(((sval) >> 0) & 0x3f)
 #define AMD0F_PST_ST_VID(sval)		(((sval) >> 6) & 0x3f)
+
+#define AMD1X_GET_PSTATE_LIMIT(val) ((val >> 4) & 0x07)
 
 #define INTEL_MSR_MISC_ENABLE		0x1a0
 #define INTEL_MSR_MISC_EST_EN		0x10000ULL
@@ -230,15 +232,20 @@ acpi_pst_amd1x_check_pstates(const struct acpi_pstate *pstates, int npstates,
 static int
 acpi_pst_amd10_check_pstates(const struct acpi_pstate *pstates, int npstates)
 {
-	/* Only P0-P4 are supported */
-	if (npstates > AMD10_MSR_PSTATE_COUNT) {
-		kprintf("cpu%d: only P0-P4 is allowed\n", mycpuid);
+	uint64_t val;
+	uint32_t limit;
+
+	val = rdmsr (AMD1X_MSR_PSTATE_LIMIT);
+	limit = AMD1X_GET_PSTATE_LIMIT(val)+1;
+	if (npstates > limit) {
+		kprintf("cpu%d: only %d P-states are allowed\n", mycpuid,
+		    limit);
 		return EINVAL;
 	}
 
-	return acpi_pst_amd1x_check_pstates(pstates, npstates,
-			AMD10_MSR_PSTATE_START,
-			AMD10_MSR_PSTATE_START + AMD10_MSR_PSTATE_COUNT);
+	return acpi_pst_amd1x_check_pstates1(pstates, npstates,
+		AMD1X_MSR_PSTATE_START,
+		AMD1X_MSR_PSTATE_START + limit);
 }
 
 static int
