@@ -17,6 +17,9 @@ CFLAGS+=-I${.CURDIR}/../libthread_db
 # enable extra internal consistancy checks
 CFLAGS+=-D_PTHREADS_INVARIANTS
 
+# This library cannot be reloaded, so prevent its unload
+LDFLAGS+=-Wl,-znodelete
+
 PRECIOUSLIB=	yes
 
 LIBDIR=	/usr/lib/thread
