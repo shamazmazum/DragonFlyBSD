@@ -155,11 +155,6 @@ __ElfType(Auxinfo);
 #define	ELF_TARG_MACH	EM_X86_64
 #define	ELF_TARG_VER	1
 
- /*
-  * x86_64 load base for PIE binaries
-  */
-#define	ET_DYN_LOAD_ADDR	0x01021000
-
 #ifdef _KERNEL
 /*
  * On the i386 we load the dynamic linker where a userland call

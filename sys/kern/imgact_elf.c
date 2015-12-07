@@ -610,7 +610,7 @@ __CONCAT(exec_,__elfN(imgact))(struct image_params *imgp)
 	u_long text_size = 0, data_size = 0, total_size = 0;
 	u_long text_addr = 0, data_addr = 0;
 	u_long seg_size, seg_addr;
-	u_long addr, baddr, et_dyn_addr, entry = 0, proghdr = 0;
+	u_long addr, baddr, et_dyn_addr = 0, entry = 0, proghdr = 0;
 	int32_t osrel = 0;
 	int error = 0, i, n;
 	boolean_t failure;
@@ -690,15 +690,15 @@ __CONCAT(exec_,__elfN(imgact))(struct image_params *imgp)
 			return (ENOEXEC);
                 }
 		/*
-		 * Honour the base load address from the dso if it is
-		 * non-zero for some reason.
+		 * If p_vaddr field of PT_LOAD program header is zero and type of an
+		 * executale is ET_DYN, then it must be a position independent
+		 * executable (PIE). In this case the system needs to pick a base
+		 * address for us. Set et_dyn_addr to non-zero and choose the actual
+		 * address when we are ready.
 		 */
 		if (baddr == 0)
-			et_dyn_addr = ET_DYN_LOAD_ADDR;
-		else
-			et_dyn_addr = 0;
-	} else
-		et_dyn_addr = 0;
+			et_dyn_addr = 1;
+	}
 
 	if (interp != NULL && brand_info->interp_newpath != NULL)
 		newinterp = brand_info->interp_newpath;
@@ -714,6 +714,11 @@ __CONCAT(exec_,__elfN(imgact))(struct image_params *imgp)
 	vsetflags(imgp->vp, VTEXT);
 
 	vmspace = imgp->proc->p_vmspace;
+
+	/* Choose the base address for dynamic executables if we need to. */
+	if (et_dyn_addr)
+		et_dyn_addr = vm_map_hint(imgp->proc, 0,
+		    VM_PROT_READ | VM_PROT_EXECUTE);
 
 	for (i = 0; i < hdr->e_phnum; i++) {
 		switch (phdr[i].p_type) {
