@@ -987,6 +987,9 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data,
 	lwkt_gettoken(&mpipe->pipe_wlock);
 
 	switch (cmd) {
+	case FIONBIO:
+		error = 0;
+		break;
 	case FIOASYNC:
 		if (*(int *)data) {
 			mpipe->pipe_state |= PIPE_ASYNC;

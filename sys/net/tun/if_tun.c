@@ -491,6 +491,8 @@ tunioctl(struct dev_ioctl_args *ap)
 		else
 			tp->tun_flags &= ~TUN_ASYNC;
 		break;
+	case FIONBIO:
+		break;
 	case FIONREAD:
 		*(int *)ap->a_data = ifsq_poll_pktlen(
 		    ifq_get_subq_default(&tp->tun_if.if_snd));

@@ -919,6 +919,8 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag)
 			CLR(tp->t_state, TS_ASYNC);
 		crit_exit();
 		break;
+	case FIONBIO:
+		break;
 	case FIONREAD:			/* get # bytes to read */
 		crit_enter();
 		*(int *)data = ttnread(tp);

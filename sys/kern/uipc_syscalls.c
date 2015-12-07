@@ -344,10 +344,10 @@ accepted:
 	nfp->f_ops = &socketops;
 	nfp->f_data = so;
 	/* Sync socket nonblocking/async state with file flags */
-	tmp = fflag & FNONBLOCK;
-	fo_ioctl(nfp, FIONBIO, (caddr_t)&tmp, td->td_ucred, NULL);
 	tmp = fflag & FASYNC;
 	fo_ioctl(nfp, FIOASYNC, (caddr_t)&tmp, td->td_ucred, NULL);
+	tmp = fflag & FNONBLOCK;
+	fo_ioctl(nfp, FIONBIO, (caddr_t)&tmp, td->td_ucred, NULL);
 
 	sa = NULL;
 	if (so->so_faddr != NULL) {

@@ -752,6 +752,9 @@ tapioctl(struct dev_ioctl_args *ap)
 			tp->tap_flags &= ~TAP_ASYNC;
 		break;
 
+	case FIONBIO:
+		break;
+
 	case FIONREAD:
 		/* Take a look at devq first */
 		IF_POLL(&tp->tap_devq, mb);

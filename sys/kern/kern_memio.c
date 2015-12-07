@@ -572,6 +572,8 @@ random_ioctl(cdev_t dev, u_long cmd, caddr_t data, int flags, struct ucred *cred
 	/* Really handled in upper layer */
 	case FIOASYNC:
 		break;
+	case FIONBIO:
+		break;
 	case MEM_SETIRQ:
 		intr = *(int16_t *)data;
 		if ((error = priv_check_cred(cred, PRIV_ROOT, 0)) != 0)

@@ -705,7 +705,7 @@ mapped_ioctl(int fd, u_long com, caddr_t uspc_data, struct ioctl_map *map,
 			atomic_set_int(&fp->f_flag, FNONBLOCK);
 		else
 			atomic_clear_int(&fp->f_flag, FNONBLOCK);
-		error = 0;
+		error = fo_ioctl(fp, FIONBIO, (caddr_t)&tmp, cred, msg);;
 		break;
 
 	case FIOASYNC:
