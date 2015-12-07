@@ -284,6 +284,7 @@ hammer_reblock_helper(struct hammer_ioc_reblock *reblock,
 	case HAMMER_RECTYPE_INODE:
 	case HAMMER_RECTYPE_SNAPSHOT:
 	case HAMMER_RECTYPE_CONFIG:
+	case HAMMER_RECTYPE_PERM:
 		iocflags = HAMMER_IOC_DO_INODES;
 		break;
 	case HAMMER_RECTYPE_EXT:

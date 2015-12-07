@@ -1421,6 +1421,8 @@ int  hammer_unload_pseudofs(hammer_transaction_t trans, u_int32_t localization);
 void hammer_rel_pseudofs(hammer_mount_t hmp, hammer_pseudofs_inmem_t pfsm);
 int hammer_ioctl(hammer_inode_t ip, u_long com, caddr_t data, int fflag,
 			struct ucred *cred);
+int hammer_checkperm(hammer_transaction_t trans, hammer_inode_t ip,
+			u_long com, struct ucred *cred);
 
 void hammer_io_init(hammer_io_t io, hammer_volume_t volume,
 			enum hammer_io_type type);
@@ -1490,6 +1492,12 @@ int hammer_ioc_volume_list(hammer_transaction_t trans, hammer_inode_t ip,
 			struct hammer_ioc_volume_list *ioc);
 int hammer_ioc_dedup(hammer_transaction_t trans, hammer_inode_t ip,
 			struct hammer_ioc_dedup *dedup);
+int hammer_ioc_get_perm(hammer_transaction_t trans, hammer_inode_t ip,
+			struct hammer_ioc_perm *perm);
+int hammer_ioc_add_perm(hammer_transaction_t trans, hammer_inode_t ip,
+			struct hammer_ioc_perm *perm);
+int hammer_ioc_del_perm(hammer_transaction_t trans, hammer_inode_t ip,
+			struct hammer_ioc_perm *perm);
 
 int hammer_signal_check(hammer_mount_t hmp);
 

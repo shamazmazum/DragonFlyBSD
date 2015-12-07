@@ -1671,6 +1671,7 @@ hammer_alloc_data(hammer_transaction_t trans, int32_t data_len,
 		case HAMMER_RECTYPE_PFS:
 		case HAMMER_RECTYPE_SNAPSHOT:
 		case HAMMER_RECTYPE_CONFIG:
+		case HAMMER_RECTYPE_PERM:
 			zone = HAMMER_ZONE_META_INDEX;
 			break;
 		case HAMMER_RECTYPE_DATA:

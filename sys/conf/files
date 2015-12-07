@@ -1694,6 +1694,7 @@ vfs/hammer/hammer_redo.c	optional hammer
 vfs/hammer/hammer_vfsops.c	optional hammer
 vfs/hammer/hammer_vnops.c	optional hammer
 vfs/hammer/hammer_dedup.c	optional hammer
+vfs/hammer/hammer_perm.c        optional hammer
 vfs/puffs/puffs_io.c		optional puffs
 vfs/puffs/puffs_msgif.c		optional puffs
 vfs/puffs/puffs_node.c		optional puffs

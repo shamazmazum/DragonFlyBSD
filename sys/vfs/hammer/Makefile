@@ -11,7 +11,7 @@ SRCS=	hammer_vfsops.c hammer_vnops.c hammer_inode.c \
 	hammer_reblock.c hammer_rebalance.c \
 	hammer_flusher.c hammer_mirror.c \
 	hammer_pfs.c hammer_prune.c hammer_volume.c \
-	hammer_dedup.c
+	hammer_dedup.c hammer_perm.c
 SRCS+=	opt_ktr.h
 
 .include <bsd.kmod.mk>

@@ -453,6 +453,25 @@ struct hammer_ioc_config {
 };
 
 /*
+ * HAMMERIOC_GET_PERM
+ * HAMMERIOC_ADD_PERM
+ * HAMMERIOC_DEL_PERM
+ *
+ * Per-PFS ioctl() permissions.
+ *
+ * The configuration space is NOT mirrored.  mirror-write will ignore
+ * configuration space records.
+ */
+struct hammer_ioc_perm {
+	struct hammer_ioc_head head;
+	uid_t uid;
+	gid_t gid;
+	u_int64_t changed_perm;
+	u_int64_t perm;
+	u_int64_t reserved;
+};
+
+/*
  * HAMMERIOC_DEDUP
  */
 struct hammer_ioc_dedup {
@@ -506,6 +525,9 @@ struct hammer_ioc_data {
 #define HAMMERIOC_GET_DATA	_IOWR('h',26,struct hammer_ioc_data)
 #define HAMMERIOC_LIST_VOLUMES	_IOWR('h',27,struct hammer_ioc_volume_list)
 #define HAMMERIOC_PFS_ITERATE	_IOWR('h',28,struct hammer_ioc_pfs_iterate)
+#define HAMMERIOC_GET_PERM	_IOWR('h',29,struct hammer_ioc_perm)
+#define HAMMERIOC_ADD_PERM	_IOWR('h',30,struct hammer_ioc_perm)
+#define HAMMERIOC_DEL_PERM	_IOWR('h',31,struct hammer_ioc_perm)
 
 #endif
 
