@@ -60,6 +60,8 @@ uint64_t MemoryLimit = 1024LLU * 1024 * 1024;
 const char *SplitupOptStr;
 const char *CyclePath;
 const char *RestrictTarget;
+const char *UserOpt;
+const char *GroupOpt;
 
 int
 main(int ac, char **av)
@@ -72,7 +74,7 @@ main(int ac, char **av)
 	int cacheSize = 0;
 
 	while ((ch = getopt(ac, av,
-			    "b:c:de:hf:i:m:p:qrt:v2yABC:FR:S:T:X")) != -1) {
+			    "b:c:de:hf:i:m:p:qrt:v2yABC:FR:S:T:Xu:g:")) != -1) {
 		switch(ch) {
 		case '2':
 			TwoWayPipeOpt = 1;
@@ -243,6 +245,12 @@ main(int ac, char **av)
 			break;
 		case 'X':
 			CompressOpt = 1;
+			break;
+		case 'u':
+			UserOpt = optarg;
+			break;
+		case 'g':
+			GroupOpt = optarg;
 			break;
 		default:
 			usage(1);
@@ -565,6 +573,18 @@ main(int ac, char **av)
 		hammer_cmd_checkmap();
 		exit(0);
 	}
+	if (strcmp(av[0], "add-perm") == 0) {
+		hammer_cmd_change_perm(av + 1, ac - 1, 1);
+		exit(0);
+	}
+	if (strcmp(av[0], "del-perm") == 0) {
+		hammer_cmd_change_perm(av + 1, ac - 1, 0);
+		exit(0);
+	}
+	if (strcmp(av[0], "show-perm") == 0) {
+		hammer_cmd_show_perm(av + 1, ac - 1);
+		exit(0);
+	}
 	usage(1);
 	/* not reached */
 	return(0);
@@ -687,6 +707,9 @@ usage(int exit_code)
 		"hammer volume-del <device> <filesystem>\n"
 		"hammer volume-list <filesystem>\n"
 		"hammer volume-blkdevs <filesystem>\n"
+		"hammer show-perm -u user | -g group <filesystem>\n"
+		"hammer add-perm -u user | -g group <filesystem> <perm>\n"
+		"hammer del-perm -u user | -g group <filesystem> <perm>\n"
 	);
 
 	fprintf(stderr, "\nHAMMER utility version 3+ commands:\n");

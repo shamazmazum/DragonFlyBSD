@@ -804,7 +804,8 @@ hammer_mirror_nomirror(struct hammer_base_elm *base)
 	 * Certain types of records are never updated when mirroring.
 	 * Slaves have their own configuration space.
 	 */
-	if (base->rec_type == HAMMER_RECTYPE_CONFIG)
+	if ((base->rec_type == HAMMER_RECTYPE_CONFIG) ||
+		(base->rec_type == HAMMER_RECTYPE_PERM))
 		return(1);
 	return(0);
 }

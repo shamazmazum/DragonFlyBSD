@@ -63,48 +63,48 @@ static int hammer_ioc_get_data(hammer_transaction_t trans, hammer_inode_t ip,
 
 int
 hammer_ioctl(hammer_inode_t ip, u_long com, caddr_t data, int fflag,
-	     struct ucred *cred)
+		 struct ucred *cred)
 {
 	struct hammer_transaction trans;
 	int error;
 
 	error = priv_check_cred(cred, PRIV_HAMMER_IOCTL, 0);
-
 	hammer_start_transaction(&trans, ip->hmp);
+	if (error)
+		error = hammer_checkperm (&trans, ip, com, cred);
+	if (error) {
+		hammer_done_transaction (&trans);
+		return error;
+	}
 
 	switch(com) {
 	case HAMMERIOC_PRUNE:
-		if (error == 0) {
-			error = hammer_ioc_prune(&trans, ip,
+		error = hammer_ioc_prune(&trans, ip,
 					(struct hammer_ioc_prune *)data);
-		}
 		break;
 	case HAMMERIOC_GETHISTORY:
 		error = hammer_ioc_gethistory(&trans, ip,
 					(struct hammer_ioc_history *)data);
 		break;
 	case HAMMERIOC_REBLOCK:
-		if (error == 0) {
-			error = hammer_ioc_reblock(&trans, ip,
+		error = hammer_ioc_reblock(&trans, ip,
 					(struct hammer_ioc_reblock *)data);
-		}
 		break;
 	case HAMMERIOC_REBALANCE:
 		/*
-		 * Rebalancing needs to lock a lot of B-Tree nodes.  The
+		 * Rebalancing needs to lock a lot of B-Tree nodes.	 The
 		 * children and children's children.  Systems with very
 		 * little memory will not be able to do it.
 		 */
-		if (error == 0 && nbuf < HAMMER_REBALANCE_MIN_BUFS) {
-			hkprintf("System has insufficient buffers "
-				"to rebalance the tree.  nbuf < %d\n",
+		if (nbuf < HAMMER_REBALANCE_MIN_BUFS) {
+			kprintf("System has insufficient buffers "
+				"to rebalance the tree.	 nbuf < %d\n",
 				HAMMER_REBALANCE_MIN_BUFS);
 			error = ENOSPC;
 		}
-		if (error == 0) {
+		if (error == 0)
 			error = hammer_ioc_rebalance(&trans, ip,
-					(struct hammer_ioc_rebalance *)data);
-		}
+			    (struct hammer_ioc_rebalance *)data);
 		break;
 	case HAMMERIOC_SYNCTID:
 		error = hammer_ioc_synctid(&trans, ip,
@@ -112,95 +112,67 @@ hammer_ioctl(hammer_inode_t ip, u_long com, caddr_t data, int fflag,
 		break;
 	case HAMMERIOC_GET_PSEUDOFS:
 		error = hammer_ioc_get_pseudofs(&trans, ip,
-				    (struct hammer_ioc_pseudofs_rw *)data);
+					(struct hammer_ioc_pseudofs_rw *)data);
 		break;
 	case HAMMERIOC_SET_PSEUDOFS:
-		if (error == 0) {
-			error = hammer_ioc_set_pseudofs(&trans, ip, cred,
-				    (struct hammer_ioc_pseudofs_rw *)data);
-		}
+		error = hammer_ioc_set_pseudofs(&trans, ip, cred,
+					(struct hammer_ioc_pseudofs_rw *)data);
 		break;
 	case HAMMERIOC_UPG_PSEUDOFS:
-		if (error == 0) {
-			error = hammer_ioc_upgrade_pseudofs(&trans, ip,
-				    (struct hammer_ioc_pseudofs_rw *)data);
-		}
+		error = hammer_ioc_upgrade_pseudofs(&trans, ip,
+					(struct hammer_ioc_pseudofs_rw *)data);
 		break;
 	case HAMMERIOC_DGD_PSEUDOFS:
-		if (error == 0) {
-			error = hammer_ioc_downgrade_pseudofs(&trans, ip,
-				    (struct hammer_ioc_pseudofs_rw *)data);
-		}
+		error = hammer_ioc_downgrade_pseudofs(&trans, ip,
+					(struct hammer_ioc_pseudofs_rw *)data);
 		break;
 	case HAMMERIOC_RMR_PSEUDOFS:
-		if (error == 0) {
-			error = hammer_ioc_destroy_pseudofs(&trans, ip,
-				    (struct hammer_ioc_pseudofs_rw *)data);
-		}
+		error = hammer_ioc_destroy_pseudofs(&trans, ip,
+					(struct hammer_ioc_pseudofs_rw *)data);
 		break;
 	case HAMMERIOC_WAI_PSEUDOFS:
-		if (error == 0) {
-			error = hammer_ioc_wait_pseudofs(&trans, ip,
-				    (struct hammer_ioc_pseudofs_rw *)data);
-		}
+		error = hammer_ioc_wait_pseudofs(&trans, ip,
+					(struct hammer_ioc_pseudofs_rw *)data);
 		break;
 	case HAMMERIOC_MIRROR_READ:
-		if (error == 0) {
-			error = hammer_ioc_mirror_read(&trans, ip,
-				    (struct hammer_ioc_mirror_rw *)data);
-		}
+		error = hammer_ioc_mirror_read(&trans, ip,
+					(struct hammer_ioc_mirror_rw *)data);
 		break;
 	case HAMMERIOC_MIRROR_WRITE:
-		if (error == 0) {
-			error = hammer_ioc_mirror_write(&trans, ip,
-				    (struct hammer_ioc_mirror_rw *)data);
-		}
+		error = hammer_ioc_mirror_write(&trans, ip,
+					(struct hammer_ioc_mirror_rw *)data);
 		break;
 	case HAMMERIOC_GET_VERSION:
 		error = hammer_ioc_get_version(&trans, ip,
-				    (struct hammer_ioc_version *)data);
+					(struct hammer_ioc_version *)data);
 		break;
 	case HAMMERIOC_GET_INFO:
 		error = hammer_ioc_get_info(&trans,
-				    (struct hammer_ioc_info *)data);
+					(struct hammer_ioc_info *)data);
 		break;
 	case HAMMERIOC_SET_VERSION:
-		if (error == 0) {
-			error = hammer_ioc_set_version(&trans, ip,
-					    (struct hammer_ioc_version *)data);
-		}
+		error = hammer_ioc_set_version(&trans, ip,
+					(struct hammer_ioc_version *)data);
 		break;
 	case HAMMERIOC_ADD_VOLUME:
-		if (error == 0) {
-			error = priv_check_cred(cred, PRIV_HAMMER_VOLUME, 0);
-			if (error == 0)
-				error = hammer_ioc_volume_add(&trans, ip,
-					    (struct hammer_ioc_volume *)data);
-		}
+		error = hammer_ioc_volume_add(&trans, ip,
+					(struct hammer_ioc_volume *)data);
 		break;
 	case HAMMERIOC_DEL_VOLUME:
-		if (error == 0) {
-			error = priv_check_cred(cred, PRIV_HAMMER_VOLUME, 0);
-			if (error == 0)
-				error = hammer_ioc_volume_del(&trans, ip,
-					    (struct hammer_ioc_volume *)data);
-		}
+		error = hammer_ioc_volume_del(&trans, ip,
+					(struct hammer_ioc_volume *)data);
 		break;
 	case HAMMERIOC_LIST_VOLUMES:
 		error = hammer_ioc_volume_list(&trans, ip,
-		    (struct hammer_ioc_volume_list *)data);
+			(struct hammer_ioc_volume_list *)data);
 		break;
 	case HAMMERIOC_ADD_SNAPSHOT:
-		if (error == 0) {
-			error = hammer_ioc_add_snapshot(
+		error = hammer_ioc_add_snapshot(
 					&trans, ip, (struct hammer_ioc_snapshot *)data);
-		}
 		break;
 	case HAMMERIOC_DEL_SNAPSHOT:
-		if (error == 0) {
-			error = hammer_ioc_del_snapshot(
+		error = hammer_ioc_del_snapshot(
 					&trans, ip, (struct hammer_ioc_snapshot *)data);
-		}
 		break;
 	case HAMMERIOC_GET_SNAPSHOT:
 		error = hammer_ioc_get_snapshot(
@@ -211,26 +183,32 @@ hammer_ioctl(hammer_inode_t ip, u_long com, caddr_t data, int fflag,
 					&trans, ip, (struct hammer_ioc_config *)data);
 		break;
 	case HAMMERIOC_SET_CONFIG:
-		if (error == 0) {
-			error = hammer_ioc_set_config(
+		error = hammer_ioc_set_config(
 					&trans, ip, (struct hammer_ioc_config *)data);
-		}
 		break;
 	case HAMMERIOC_DEDUP:
-		if (error == 0) {
-			error = hammer_ioc_dedup(
+		error = hammer_ioc_dedup(
 					&trans, ip, (struct hammer_ioc_dedup *)data);
-		}
 		break;
 	case HAMMERIOC_GET_DATA:
-		if (error == 0) {
-			error = hammer_ioc_get_data(
+		error = hammer_ioc_get_data(
 					&trans, ip, (struct hammer_ioc_data *)data);
-		}
 		break;
 	case HAMMERIOC_PFS_ITERATE:
 		error = hammer_ioc_iterate_pseudofs(
 				&trans, ip, (struct hammer_ioc_pfs_iterate *)data);
+		break;
+	case HAMMERIOC_GET_PERM:
+		error = hammer_ioc_get_perm(
+			&trans, ip, (struct hammer_ioc_perm *)data);
+		break;
+	case HAMMERIOC_ADD_PERM:
+		error = hammer_ioc_add_perm(
+			&trans, ip, (struct hammer_ioc_perm *)data);
+		break;
+	case HAMMERIOC_DEL_PERM:
+		error = hammer_ioc_del_perm(
+			&trans, ip, (struct hammer_ioc_perm *)data);
 		break;
 	default:
 		error = EOPNOTSUPP;

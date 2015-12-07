@@ -718,6 +718,7 @@ typedef struct hammer_volume_ondisk *hammer_volume_ondisk_t;
 #define HAMMER_RECTYPE_PFS		0x0015	/* PFS management */
 #define HAMMER_RECTYPE_SNAPSHOT		0x0016	/* Snapshot management */
 #define HAMMER_RECTYPE_CONFIG		0x0017	/* hammer cleanup config */
+#define HAMMER_RECTYPE_PERM			0x0018	/* ioctl() per-PFS permissions */
 #define HAMMER_RECTYPE_MAX		0xFFFF
 
 #define HAMMER_RECTYPE_ENTRY_START	(HAMMER_RECTYPE_INODE + 1)
@@ -924,6 +925,17 @@ struct hammer_config_data {
 };
 
 /*
+ * Per-PFS ioctl() permissions for a specific user.
+ * { ObjId = HAMMER_OBJID_ROOT, Key = <uid>, rectype = PERM }.
+ * This data is not mirrored, like CONFIG data
+ */
+#define HAMMER_PERM_ADD_SNAPSHOT 1
+#define HAMMER_PERM_DEL_SNAPSHOT 2
+#define HAMMER_PERM_MIRROR_READ  4
+#define HAMMER_PERM_MIRROR_WRITE 8
+#define HAMMER_MAX_PERM_MASK 15
+
+/*
  * Rollup various structures embedded as record data
  */
 union hammer_data_ondisk {
@@ -933,6 +945,7 @@ union hammer_data_ondisk {
 	struct hammer_pseudofs_data pfsd;
 	struct hammer_snapshot_data snap;
 	struct hammer_config_data config;
+	u_int64_t perm;
 };
 
 typedef union hammer_data_ondisk *hammer_data_ondisk_t;

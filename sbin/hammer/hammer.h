@@ -82,6 +82,8 @@ extern uint64_t SplitupOpt;
 extern uint64_t MemoryLimit;
 extern const char *SplitupOptStr;
 extern const char *CyclePath;
+extern const char *UserOpt;
+extern const char *GroupOpt;
 
 void hammer_cmd_show(hammer_tid_t node_offset, const char *arg,
 		int filter, int depth,
@@ -126,6 +128,8 @@ void hammer_cmd_volume_blkdevs(char **av, int ac, const char *cmd);
 void hammer_cmd_dedup_simulate(char **av, int ac);
 void hammer_cmd_dedup(char **av, int ac);
 void hammer_cmd_abort_cleanup(char **av, int ac);
+void hammer_cmd_change_perm(char **av, int ac, int add);
+void hammer_cmd_show_perm(char **av, int ac);
 
 void hammer_get_cycle(hammer_base_elm_t base, hammer_tid_t *tidp);
 void hammer_set_cycle(hammer_base_elm_t base, hammer_tid_t tid);
