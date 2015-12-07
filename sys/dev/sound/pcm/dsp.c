@@ -589,6 +589,8 @@ dsp_open(struct dev_open_args *ap)
 				pcm_chnrelease(rdch);
 			}
 		} else {
+			if (flags & O_NONBLOCK)
+				rdch->flags |= CHN_F_NBIO;
 			if (flags & O_EXCL)
 				rdch->flags |= CHN_F_EXCLUSIVE;
 			pcm_chnref(rdch, 1);
@@ -634,6 +636,8 @@ dsp_open(struct dev_open_args *ap)
 				pcm_chnrelease(wrch);
 			}
 		} else {
+			if (flags & O_NONBLOCK)
+				wrch->flags |= CHN_F_NBIO;
 			if (flags & O_EXCL)
 				wrch->flags |= CHN_F_EXCLUSIVE;
 			pcm_chnref(wrch, 1);
@@ -830,11 +834,11 @@ dsp_close(struct dev_close_args *ap)
 }
 
 static __inline int
-dsp_io_ops(struct cdev *i_dev, struct uio *buf, int ioflags)
+dsp_io_ops(struct cdev *i_dev, struct uio *buf)
 {
 	struct snddev_info *d;
 	struct pcm_channel **ch, *rdch, *wrch;
-	int (*chn_io)(struct pcm_channel *, struct uio *, int);
+	int (*chn_io)(struct pcm_channel *, struct uio *);
 	int prio, ret;
 	pid_t runpid;
 
@@ -891,7 +895,7 @@ dsp_io_ops(struct cdev *i_dev, struct uio *buf, int ioflags)
 	 * someone else doesn't come along and muss up the buffer.
 	 */
 	++(*ch)->inprog;
-	ret = chn_io(*ch, buf, ioflags);
+	ret = chn_io(*ch, buf);
 	--(*ch)->inprog;
 
 	CHN_BROADCAST(&(*ch)->cv);
@@ -909,7 +913,7 @@ dsp_read(struct dev_read_args *ap)
 	struct cdev *i_dev = ap->a_head.a_dev;
 	struct uio *buf = ap->a_uio;
 
-	return (dsp_io_ops(i_dev, buf, ap->a_ioflag));
+	return (dsp_io_ops(i_dev, buf));
 }
 
 static int
@@ -918,7 +922,7 @@ dsp_write(struct dev_write_args *ap)
 	struct cdev *i_dev = ap->a_head.a_dev;
 	struct uio *buf = ap->a_uio;
 
-	return (dsp_io_ops(i_dev, buf, ap->a_ioflag));
+	return (dsp_io_ops(i_dev, buf));
 }
 
 static int
@@ -1358,12 +1362,24 @@ dsp_ioctl(struct dev_ioctl_args *ap)
 		DEB( kprintf("FIOASYNC\n") ; )
 		break;
 
-    	case FIONBIO: /* set/clear non-blocking i/o */
-		DEB( kprintf("FIONBIO\n") ; )
-		break;
-
     	case SNDCTL_DSP_NONBLOCK: /* set non-blocking i/o */
-		atomic_set_int(&ap->a_fp->f_flag, FNONBLOCK);
+    	case FIONBIO: /* set/clear non-blocking i/o */
+		if (rdch) {
+			CHN_LOCK(rdch);
+			if (cmd == SNDCTL_DSP_NONBLOCK || *arg_i)
+				rdch->flags |= CHN_F_NBIO;
+			else
+				rdch->flags &= ~CHN_F_NBIO;
+			CHN_UNLOCK(rdch);
+		}
+		if (wrch) {
+			CHN_LOCK(wrch);
+			if (cmd == SNDCTL_DSP_NONBLOCK || *arg_i)
+				wrch->flags |= CHN_F_NBIO;
+			else
+				wrch->flags &= ~CHN_F_NBIO;
+			CHN_UNLOCK(wrch);
+		}
 		break;
 
     	/*

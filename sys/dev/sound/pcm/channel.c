@@ -33,7 +33,6 @@
 
 #include <dev/sound/pcm/sound.h>
 #include <dev/sound/pcm/vchan.h>
-#include <sys/vnode.h>
 
 #include "feeder_if.h"
 
@@ -490,7 +489,7 @@ chn_wrintr(struct pcm_channel *c)
  */
 
 int
-chn_write(struct pcm_channel *c, struct uio *buf, int ioflags)
+chn_write(struct pcm_channel *c, struct uio *buf)
 {
 	struct snd_dbuf *bs = c->bufsoft;
 	void *off;
@@ -525,8 +524,7 @@ chn_write(struct pcm_channel *c, struct uio *buf, int ioflags)
 				if (ret != 0)
 					c->flags |= CHN_F_DEAD;
 			}
-		} else if ((ioflags & IO_NDELAY) ||
-		    (c->flags & CHN_F_NOTRIGGER)) {
+		} else if (c->flags & (CHN_F_NBIO | CHN_F_NOTRIGGER)) {
 			/**
 			 * @todo Evaluate whether EAGAIN is truly desirable.
 			 * 	 4Front drivers behave like this, but I'm
@@ -621,7 +619,7 @@ chn_rdintr(struct pcm_channel *c)
  */
 
 int
-chn_read(struct pcm_channel *c, struct uio *buf, int ioflags)
+chn_read(struct pcm_channel *c, struct uio *buf)
 {
 	struct snd_dbuf *bs = c->bufsoft;
 	void *off;
@@ -659,10 +657,9 @@ chn_read(struct pcm_channel *c, struct uio *buf, int ioflags)
 				sndbuf_dispose(bs, NULL, t);
 			}
 			ret = 0;
-		} else if ((ioflags & IO_NDELAY) ||
-		    (c->flags & CHN_F_NOTRIGGER)) {
+		} else if (c->flags & (CHN_F_NBIO | CHN_F_NOTRIGGER))
 			ret = EAGAIN;
-		} else {
+		else {
    			ret = chn_sleep(c, timeout);
 			if (ret == EAGAIN) {
 				ret = EINVAL;
