@@ -57,6 +57,11 @@ void hammer_cmd_show_perm(char **av, int ac)
 		if ((perm_command[i].permission & perm.perm) == perm_command[i].permission)
 			printf ("%s\n", perm_command[i].desc);
 	}
+
+	printf ("Possible user permissions are:\n");
+	for (i=0; i<sizeof(perm_command)/sizeof(perm_command[0]); i++) {
+		printf ("%s: %s\n", perm_command[i].command, perm_command[i].desc);
+	}
 }
 
 void hammer_cmd_change_perm(char **av, int ac, int add)

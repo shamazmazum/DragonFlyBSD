@@ -97,7 +97,7 @@ hammer_ioctl(hammer_inode_t ip, u_long com, caddr_t data, int fflag,
 		 * little memory will not be able to do it.
 		 */
 		if (nbuf < HAMMER_REBALANCE_MIN_BUFS) {
-			kprintf("System has insufficient buffers "
+			hkprintf("System has insufficient buffers "
 				"to rebalance the tree.	 nbuf < %d\n",
 				HAMMER_REBALANCE_MIN_BUFS);
 			error = ENOSPC;
