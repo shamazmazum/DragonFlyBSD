@@ -202,6 +202,7 @@ hammer_flusher_create(hammer_mount_t hmp)
 	hmp->flusher.signal = 0;
 	hmp->flusher.done = 0;
 	hmp->flusher.next = 1;
+	hmp->flusher.tid = hmp->next_tid;
 	hammer_ref(&hmp->flusher.finalize_lock);
 	TAILQ_INIT(&hmp->flusher.run_list);
 	TAILQ_INIT(&hmp->flusher.ready_list);
