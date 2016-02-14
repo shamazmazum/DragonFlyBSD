@@ -748,6 +748,12 @@ print_record(hammer_btree_elm_t elm)
 			hexdump(data, data_len, "\t\t  ", 0);
 		}
 		break;
+	case HAMMER_RECTYPE_PERM:
+        printf("\n%17s", "");
+		printf("UID=%li GID=%li\n", elm->leaf.base.key, 0L);
+        printf("%17s", "");
+		printf("permissions=0x%lx", data->perm);
+		break;
 	default:
 		assert(0);
 		break;

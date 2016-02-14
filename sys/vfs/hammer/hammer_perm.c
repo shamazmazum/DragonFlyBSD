@@ -107,7 +107,7 @@ int hammer_ioc_del_perm(hammer_transaction_t trans, hammer_inode_t ip,
 		return error;
 
 	/* Nothing to delete */
-	if ((perm->changed_perm & perm_data) != perm->changed_perm) {
+	if (!(perm->changed_perm & perm_data)) {
 		perm->head.error = EINVAL;
 		return 0;
 	}
@@ -173,7 +173,7 @@ int hammer_checkperm(hammer_transaction_t trans, hammer_inode_t ip,
 	if (error)
 		return error;
 
-	if ((perm & p) == p)
+	if (perm & p)
 		return 0;
 	return EPERM;
 }
