@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2011, Intel Corporation 
+ * Copyright (c) 2001-2013, Intel Corporation 
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without 
@@ -152,11 +152,13 @@
 #define IGB_SMARTSPEED_MAX		15
 #define IGB_MAX_LOOP			10
 
-#define IGB_RX_PTHRESH			(hw->mac.type <= e1000_82576 ? 16 : 8)
+#define IGB_RX_PTHRESH			((hw->mac.type == e1000_i354) ? 12 : \
+					  ((hw->mac.type <= e1000_82576) ? 16 : 8))
 #define IGB_RX_HTHRESH			8
-#define IGB_RX_WTHRESH			1
+#define IGB_RX_WTHRESH			((hw->mac.type == e1000_82576 && \
+					  sc->msix_mem_res) ? 1 : 4)
 
-#define IGB_TX_PTHRESH			8
+#define IGB_TX_PTHRESH			((hw->mac.type == e1000_i354) ? 20 : 8)
 #define IGB_TX_HTHRESH			1
 #define IGB_TX_WTHRESH			16
 
@@ -178,11 +180,11 @@
 #define IGB_MSIX_BAR			3
 #define IGB_MSIX_BAR_ALT		4
 
-#define IGB_MAX_SCATTER			64
 #define IGB_VFTA_SIZE			128
 #define IGB_TSO_SIZE			(IP_MAXPACKET + \
 					 sizeof(struct ether_vlan_header))
 #define IGB_HDR_BUF			128
+#define IGB_TXPBSIZE			20408
 #define IGB_PKTTYPE_MASK		0x0000FFF0
 
 #define IGB_CSUM_FEATURES		(CSUM_IP | CSUM_TCP | CSUM_UDP)
@@ -191,9 +193,7 @@
 #define IGB_TX_RESERVED			3
 
 /* Large enough for 64K TSO */
-#define IGB_TX_SPARE			33
-
-#define IGB_TX_OACTIVE_MAX		64
+#define IGB_MAX_SCATTER			33
 
 #define IGB_NRSSRK			10
 #define IGB_RSSRK_SIZE			4
@@ -209,6 +209,9 @@
 
 #define IGB_EITR_INTVL_MASK		0x7ffc
 #define IGB_EITR_INTVL_SHIFT		2
+
+/* Disable DMA Coalesce Flush */
+#define IGB_DMCTLX_DCFLUSH_DIS		0x80000000
 
 struct igb_softc;
 
@@ -242,12 +245,9 @@ struct igb_tx_ring {
 	struct igb_tx_buf	*tx_buf;
 	bus_dma_tag_t		tx_tag;
 	int			tx_nsegs;
-	int			spare_desc;
-	int			oact_lo_desc;
-	int			oact_hi_desc;
 	int			intr_nsegs;
 	int			wreg_nsegs;
-	int			tx_intr_bit;
+	int			tx_intr_vec;
 	uint32_t		tx_intr_mask;
 	struct ifsubq_watchdog	tx_watchdog;
 
@@ -275,7 +275,7 @@ struct igb_rx_ring {
 	struct igb_rx_buf	*rx_buf;
 	bus_dma_tag_t		rx_tag;
 	bus_dmamap_t		rx_sparemap;
-	int			rx_intr_bit;
+	int			rx_intr_vec;
 	uint32_t		rx_intr_mask;
 
 	/*
@@ -286,32 +286,31 @@ struct igb_rx_ring {
 	struct mbuf		*lmp;
 	int			wreg_nsegs;
 
+	struct igb_tx_ring	*rx_txr;	/* piggybacked TX ring */
+
 	/* Soft stats */
 	u_long			rx_packets;
 
 	struct igb_dma		rxdma;
 } __cachealign;
 
-struct igb_msix_data {
-	struct lwkt_serialize	*msix_serialize;
-	struct lwkt_serialize	msix_serialize0;
-	struct igb_softc	*msix_sc;
-	uint32_t		msix_mask;
-	struct igb_rx_ring	*msix_rx;
-	struct igb_tx_ring	*msix_tx;
-
-	driver_intr_t		*msix_func;
-	void			*msix_arg;
-
-	int			msix_cpuid;
-	char			msix_desc[32];
-	int			msix_rid;
-	struct resource		*msix_res;
-	void			*msix_handle;
-	u_int			msix_vector;
-	int			msix_rate;
-	char			msix_rate_desc[32];
-} __cachealign;
+struct igb_intr_data {
+	struct lwkt_serialize	*intr_serialize;
+	driver_intr_t		*intr_func;
+	void			*intr_hand;
+	struct resource		*intr_res;
+	void			*intr_funcarg;
+	int			intr_rid;
+	int			intr_cpuid;
+	int			intr_rate;
+	int			intr_use;
+#define IGB_INTR_USE_RXTX	0
+#define IGB_INTR_USE_STATUS	1
+#define IGB_INTR_USE_RX		2
+#define IGB_INTR_USE_TX		3
+	const char		*intr_desc;
+	char			intr_desc0[64];
+};
 
 struct igb_softc {
 	struct arpcom		arpcom;
@@ -331,11 +330,6 @@ struct igb_softc {
 	struct ifmedia		media;
 	struct callout		timer;
 	int			timer_cpuid;
-
-	int			intr_type;
-	int			intr_rid;
-	struct resource		*intr_res;
-	void			*intr_tag;
 
 	int			if_flags;
 	int			max_frame_size;
@@ -361,9 +355,9 @@ struct igb_softc {
 	struct lwkt_serialize	**serializes;
 	struct lwkt_serialize	main_serialize;
 
-	int			intr_rate;
+	int			intr_type;
 	uint32_t		intr_mask;
-	int			sts_intr_bit;
+	int			sts_msix_vec;
 	uint32_t		sts_intr_mask;
 
 	/*
@@ -402,8 +396,9 @@ struct igb_softc {
 
 	int			msix_mem_rid;
 	struct resource 	*msix_mem_res;
-	int			msix_cnt;
-	struct igb_msix_data	*msix_data;
+
+	int			intr_cnt;
+	struct igb_intr_data	*intr_data;
 };
 
 #define IGB_ENABLE_HWRSS(sc)	((sc)->rx_ring_cnt > 1)
@@ -429,9 +424,6 @@ struct igb_rx_buf {
 	cur &= 0xFFFFFFFF00000000LL;		\
 	cur |= new;				\
 }
-
-#define IGB_IS_OACTIVE(txr)	((txr)->tx_avail < (txr)->oact_lo_desc)
-#define IGB_IS_NOT_OACTIVE(txr)	((txr)->tx_avail >= (txr)->oact_hi_desc)
 
 #define IGB_I210_LINK_DELAY	1000	/* unit: ms */
 

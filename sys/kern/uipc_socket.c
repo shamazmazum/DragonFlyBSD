@@ -178,8 +178,8 @@ soalloc(int waitok, struct protosw *pr)
 		/* XXX race condition for reentrant kernel */
 		so->so_proto = pr;
 		TAILQ_INIT(&so->so_aiojobq);
-		TAILQ_INIT(&so->so_rcv.ssb_kq.ki_mlist);
-		TAILQ_INIT(&so->so_snd.ssb_kq.ki_mlist);
+		TAILQ_INIT(&so->so_rcv.ssb_mlist);
+		TAILQ_INIT(&so->so_snd.ssb_mlist);
 		lwkt_token_init(&so->so_rcv.ssb_token, "rcvtok");
 		lwkt_token_init(&so->so_snd.ssb_token, "sndtok");
 		spin_init(&so->so_rcvd_spin, "soalloc");
@@ -2487,7 +2487,14 @@ sohasoutofband(struct socket *so)
 {
 	if (so->so_sigio != NULL)
 		pgsigio(so->so_sigio, SIGURG, 0);
-	KNOTE(&so->so_rcv.ssb_kq.ki_note, NOTE_OOB);
+	/*
+	 * NOTE:
+	 * There is no need to use NOTE_OOB as KNOTE hint here:
+	 * soread filter depends on so_oobmark and SS_RCVATMARK
+	 * so_state.  NOTE_OOB would cause unnecessary penalty
+	 * in KNOTE, if there was knote processing contention.
+	 */
+	KNOTE(&so->so_rcv.ssb_kq.ki_note, 0);
 }
 
 int
@@ -2533,7 +2540,7 @@ filt_sordetach(struct knote *kn)
 
 /*ARGSUSED*/
 static int
-filt_soread(struct knote *kn, long hint)
+filt_soread(struct knote *kn, long hint __unused)
 {
 	struct socket *so = (struct socket *)kn->kn_fp->f_data;
 
@@ -2576,7 +2583,7 @@ filt_sowdetach(struct knote *kn)
 
 /*ARGSUSED*/
 static int
-filt_sowrite(struct knote *kn, long hint)
+filt_sowrite(struct knote *kn, long hint __unused)
 {
 	struct socket *so = (struct socket *)kn->kn_fp->f_data;
 
@@ -2598,7 +2605,7 @@ filt_sowrite(struct knote *kn, long hint)
 
 /*ARGSUSED*/
 static int
-filt_solisten(struct knote *kn, long hint)
+filt_solisten(struct knote *kn, long hint __unused)
 {
 	struct socket *so = (struct socket *)kn->kn_fp->f_data;
 

@@ -1841,7 +1841,6 @@ vfs_flagstostr(int flags, const struct mountctl_opt *optp,
 		{ MNT_QUOTA,            "with-quotas" },
 		{ MNT_RDONLY,           "read-only" },
 		{ MNT_SYNCHRONOUS,      "synchronous" },
-		{ MNT_UNION,            "union" },
 		{ MNT_NOCLUSTERR,       "noclusterr" },
 		{ MNT_NOCLUSTERW,       "noclusterw" },
 		{ MNT_SUIDDIR,          "suiddir" },
@@ -1993,9 +1992,11 @@ vfs_free_netcred(struct radix_node *rn, void *w)
 static struct radix_node_head *
 vfs_create_addrlist_af(int af, struct netexport *nep)
 {
-	int off;
 	struct radix_node_head *rnh = NULL;
+#if defined(INET) || defined(INET6)
 	struct radix_node_head *maskhead = nep->ne_maskhead;
+	int off;
+#endif
 
 	NE_ASSERT_LOCKED(nep);
 	KKASSERT(maskhead != NULL);

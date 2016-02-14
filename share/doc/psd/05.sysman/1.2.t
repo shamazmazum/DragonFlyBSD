@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -30,8 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)1.2.t	8.1 (Berkeley) 6/8/93
-.\" $FreeBSD: src/share/doc/psd/05.sysman/1.2.t,v 1.5 1999/08/28 00:18:18 peter Exp $
-.\" $DragonFly: src/share/doc/psd/05.sysman/1.2.t,v 1.2 2003/06/17 04:36:56 dillon Exp $
+.\" $FreeBSD: head/share/doc/psd/05.sysman/1.2.t 263142 2014-03-14 03:07:51Z eadler $
 .\"
 .sh "Memory management\(dg
 .NH 3
@@ -43,7 +38,7 @@ releases of the system.  Of the calls described in this section,
 only \fIsbrk\fP and \fIgetpagesize\fP are included in 4.3BSD.
 .FE
 Each process begins execution with three logical areas of memory
-called text, data and stack.  
+called text, data and stack.
 The text area is read-only and shared, while the data and stack
 areas are private to the process.  Both the data and stack areas may
 be extended and contracted on program request.  The call

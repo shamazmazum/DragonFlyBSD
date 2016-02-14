@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,6 +47,9 @@
 #include <ctype.h>
 #include <err.h>
 #include <stdlib.h>
+
+#define	SA_LEN(addr)		((addr)->sa_len)
+#define	__set_errno(val)	errno = (val)
 
 int	rexecoptions;
 char	*getpass(), *getlogin();
@@ -186,7 +185,7 @@ next:
 		while ((t = token()) && t != MACH && t != DEFAULT) switch(t) {
 
 		case LOGIN:
-			if (token())
+			if (token()) {
 				if (*aname == NULL) {
 					char *tmp;
 					tmp = malloc(strlen(tokval) + 1);
@@ -196,6 +195,7 @@ next:
 					if (strcmp(*aname, tokval))
 						goto next;
 				}
+			}
 			break;
 		case PASSWD:
 			if ((*aname == NULL || strcmp(*aname, "anonymous")) &&

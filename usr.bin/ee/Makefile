@@ -9,9 +9,10 @@ PROG=	ee
 LINKS=	${BINDIR}/ee ${BINDIR}/ree ${BINDIR}/ee ${BINDIR}/edit
 MLINKS=	ee.1 ree.1 ee.1 edit.1
 DPADD=	${LIBNCURSES}
-LDADD=	-lncurses
+LDADD=	-lprivate_ncurses
+LDFLAGS+=	-rpath /lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
-WARNS?=	1
+WARNS?=	2
 
 NLS=	C fr_FR.ISO8859-1 de_DE.ISO8859-1 pl_PL.ISO8859-2 \
 	uk_UA.KOI8-U pt_BR.ISO8859-1 ru_RU.KOI8-R hu_HU.ISO8859-2

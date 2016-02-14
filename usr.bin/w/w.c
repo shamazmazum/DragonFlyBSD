@@ -29,7 +29,6 @@
  * @(#) Copyright (c) 1980, 1991, 1993, 1994 The Regents of the University of California.  All rights reserved.
  * @(#)w.c	8.4 (Berkeley) 4/16/94
  * $FreeBSD: src/usr.bin/w/w.c,v 1.38.2.6 2002/03/12 19:51:51 phantom Exp $
- * $DragonFly: src/usr.bin/w/w.c,v 1.10 2007/02/18 16:15:24 corecode Exp $
  */
 
 /*
@@ -447,7 +446,8 @@ main(int argc, char **argv)
 		p = *host_buf ? host_buf : "-";
 		if ((x = strchr(p, ':')) != NULL)
 			*x++ = '\0';
-		if (!nflag && isdigit(*p) && (l = inet_addr(p)) != -1 &&
+		if (!nflag && isdigit(*p) &&
+		    (l = inet_addr(p)) != INADDR_NONE &&
 		    (hp = gethostbyaddr(&l, sizeof(l), AF_INET))) {
 			if (domain[0] != '\0') {
 				p = hp->h_name;
@@ -513,10 +513,11 @@ pr_header(time_t *nowp, int nusers)
 	char buf[256];
 
 	/*
-	 * Print time of day.
+	 * Print time of day. (use "AM"/"PM" for all locales)
 	 */
-	(void)strftime(buf, sizeof(buf)	- 1,
-		       use_ampm	? "%l:%M%p" : "%k:%M", localtime(nowp));
+	(void)strftime_l(buf, sizeof(buf) - 1,
+		       use_ampm	? "%l:%M%p" : "%k:%M",
+		       localtime(nowp), NULL);
 	buf[sizeof(buf) - 1] = '\0';
 	(void)printf("%s ", buf);
 
@@ -557,11 +558,11 @@ pr_header(time_t *nowp, int nusers)
 	/*
 	 * Print 1, 5, and 15 minute load averages.
 	 */
-	if (getloadavg(avenrun, sizeof(avenrun) / sizeof(avenrun[0])) == -1)
+	if (getloadavg(avenrun, NELEM(avenrun)) == -1)
 		(void)printf(", no load average information available\n");
 	else {
 		(void)printf(", load averages:");
-		for (i = 0; i < (sizeof(avenrun) / sizeof(avenrun[0])); i++) {
+		for (i = 0; i < (int)NELEM(avenrun); i++) {
 			if (use_comma && i > 0)
 				(void)printf(",");
 			(void)printf(" %.2f", avenrun[i]);

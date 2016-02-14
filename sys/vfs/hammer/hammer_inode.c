@@ -51,6 +51,9 @@ static int	hammer_setup_parent_inodes_helper(hammer_record_t record,
 static void	hammer_inode_wakereclaims(hammer_inode_t ip);
 static struct hammer_inostats *hammer_inode_inostats(hammer_mount_t hmp,
 					pid_t pid);
+static struct hammer_inode *__hammer_find_inode(hammer_transaction_t trans,
+					int64_t obj_id, hammer_tid_t asof,
+					uint32_t localization);
 
 struct krate hammer_gen_krate = { 1 };
 
@@ -334,7 +337,8 @@ hammer_get_vnode(struct hammer_inode *ip, struct vnode **vpp)
 			 */
 			if (ip->obj_id == HAMMER_OBJID_ROOT) {
 				if (ip->obj_asof == hmp->asof) {
-					if (ip->obj_localization == 0)
+					if (ip->obj_localization ==
+						HAMMER_DEF_LOCALIZATION)
 						vsetflags(vp, VROOT);
 					else
 						vsetflags(vp, VPFSROOT);
@@ -418,7 +422,6 @@ hammer_get_inode(hammer_transaction_t trans, hammer_inode_t dip,
 {
 	hammer_mount_t hmp = trans->hmp;
 	struct hammer_node_cache *cachep;
-	struct hammer_inode_info iinfo;
 	struct hammer_cursor cursor;
 	struct hammer_inode *ip;
 
@@ -439,18 +442,15 @@ hammer_get_inode(hammer_transaction_t trans, hammer_inode_t dip,
 	 * link count.  hammer_vop_nresolve() uses hammer_get_dummy_inode()
 	 * to ref dummy inodes.
 	 */
-	iinfo.obj_id = obj_id;
-	iinfo.obj_asof = asof;
-	iinfo.obj_localization = localization;
 loop:
-	ip = hammer_ino_rb_tree_RB_LOOKUP_INFO(&hmp->rb_inos_root, &iinfo);
+	*errorp = 0;
+	ip = __hammer_find_inode(trans, obj_id, asof, localization);
 	if (ip) {
 		if (ip->flags & HAMMER_INODE_DUMMY) {
 			*errorp = ENOENT;
 			return(NULL);
 		}
 		hammer_ref(&ip->lock);
-		*errorp = 0;
 		return(ip);
 	}
 
@@ -461,7 +461,7 @@ loop:
 	++hammer_count_inodes;
 	++hmp->count_inodes;
 	ip->obj_id = obj_id;
-	ip->obj_asof = iinfo.obj_asof;
+	ip->obj_asof = asof;
 	ip->obj_localization = localization;
 	ip->hmp = hmp;
 	ip->flags = flags & HAMMER_INODE_RO;
@@ -504,7 +504,7 @@ retry:
 	cursor.key_beg.rec_type = HAMMER_RECTYPE_INODE;
 	cursor.key_beg.obj_type = 0;
 
-	cursor.asof = iinfo.obj_asof;
+	cursor.asof = asof;
 	cursor.flags = HAMMER_CURSOR_GET_LEAF | HAMMER_CURSOR_GET_DATA |
 		       HAMMER_CURSOR_ASOF;
 
@@ -610,7 +610,6 @@ hammer_get_dummy_inode(hammer_transaction_t trans, hammer_inode_t dip,
 		 int flags, int *errorp)
 {
 	hammer_mount_t hmp = trans->hmp;
-	struct hammer_inode_info iinfo;
 	struct hammer_inode *ip;
 
 	/*
@@ -627,12 +626,9 @@ hammer_get_dummy_inode(hammer_transaction_t trans, hammer_inode_t dip,
 	 * If we find a non-fake inode we return an error.  Only fake
 	 * inodes can be returned by this routine.
 	 */
-	iinfo.obj_id = obj_id;
-	iinfo.obj_asof = asof;
-	iinfo.obj_localization = localization;
 loop:
 	*errorp = 0;
-	ip = hammer_ino_rb_tree_RB_LOOKUP_INFO(&hmp->rb_inos_root, &iinfo);
+	ip = __hammer_find_inode(trans, obj_id, asof, localization);
 	if (ip) {
 		if ((ip->flags & HAMMER_INODE_DUMMY) == 0) {
 			*errorp = ENOENT;
@@ -649,7 +645,7 @@ loop:
 	++hammer_count_inodes;
 	++hmp->count_inodes;
 	ip->obj_id = obj_id;
-	ip->obj_asof = iinfo.obj_asof;
+	ip->obj_asof = asof;
 	ip->obj_localization = localization;
 	ip->hmp = hmp;
 	ip->flags = flags | HAMMER_INODE_RO | HAMMER_INODE_DUMMY;
@@ -713,11 +709,30 @@ loop:
 
 /*
  * Return a referenced inode only if it is in our inode cache.
- *
  * Dummy inodes do not count.
  */
 struct hammer_inode *
 hammer_find_inode(hammer_transaction_t trans, int64_t obj_id,
+		  hammer_tid_t asof, uint32_t localization)
+{
+	struct hammer_inode *ip;
+
+	ip = __hammer_find_inode(trans, obj_id, asof, localization);
+	if (ip) {
+		if (ip->flags & HAMMER_INODE_DUMMY)
+			ip = NULL;
+		else
+			hammer_ref(&ip->lock);
+	}
+	return(ip);
+}
+
+/*
+ * Return a referenced inode only if it is in our inode cache.
+ * This function does not reference inode.
+ */
+static struct hammer_inode *
+__hammer_find_inode(hammer_transaction_t trans, int64_t obj_id,
 		  hammer_tid_t asof, uint32_t localization)
 {
 	hammer_mount_t hmp = trans->hmp;
@@ -729,12 +744,7 @@ hammer_find_inode(hammer_transaction_t trans, int64_t obj_id,
 	iinfo.obj_localization = localization;
 
 	ip = hammer_ino_rb_tree_RB_LOOKUP_INFO(&hmp->rb_inos_root, &iinfo);
-	if (ip) {
-		if (ip->flags & HAMMER_INODE_DUMMY)
-			ip = NULL;
-		else
-			hammer_ref(&ip->lock);
-	}
+
 	return(ip);
 }
 
@@ -743,7 +753,7 @@ hammer_find_inode(hammer_transaction_t trans, int64_t obj_id,
  * returned inode will be referenced.  The inode is created in-memory.
  *
  * If pfsm is non-NULL the caller wishes to create the root inode for
- * a master PFS.
+ * a non-root PFS.
  */
 int
 hammer_create_inode(hammer_transaction_t trans, struct vattr *vap,
@@ -779,7 +789,7 @@ hammer_create_inode(hammer_transaction_t trans, struct vattr *vap,
 	trans->flags |= HAMMER_TRANSF_NEWINODE;
 
 	if (pfsm) {
-		KKASSERT(pfsm->localization != 0);
+		KKASSERT(pfsm->localization != HAMMER_DEF_LOCALIZATION);
 		ip->obj_id = HAMMER_OBJID_ROOT;
 		ip->obj_localization = pfsm->localization;
 	} else {
@@ -859,18 +869,6 @@ hammer_create_inode(hammer_transaction_t trans, struct vattr *vap,
 	 */
 	if (dip)
 		ip->ino_data.parent_obj_id = dip->ino_leaf.base.obj_id;
-#if 0
-	/*
-	 * The parent_obj_localization field only applies to pseudo-fs roots.
-	 * XXX this is no longer applicable, PFSs are no longer directly
-	 * tied into the parent's directory structure.
-	 */
-	if (ip->ino_data.obj_type == HAMMER_OBJTYPE_DIRECTORY &&
-	    ip->obj_id == HAMMER_OBJID_ROOT) {
-		ip->ino_data.ext.obj.parent_obj_localization =
-						dip->obj_localization;
-	}
-#endif
 
 	switch(ip->ino_leaf.base.obj_type) {
 	case HAMMER_OBJTYPE_CDEV:

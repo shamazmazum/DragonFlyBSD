@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,23 +47,8 @@ void ttysetup (int speed);
 #include <errno.h>
 #include <sys/types.h>
 #include <libutil.h>
-#include "tipconf.h"
 #include "tip.h"
 #include "pathnames.h"
-
-/*
- * Baud rate mapping table
- */
-#if !HAVE_TERMIOS
-CONST int bauds[] = {
-	0, 50, 75, 110, 134, 150, 200, 300, 600,
-	1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, -1
-};
-#endif
-
-#if !HAVE_TERMIOS
-int	disc = OTTYDISC;		/* tip normally runs this way */
-#endif
 
 static void	intprompt(int);
 static void	killchild(void);
@@ -99,13 +80,11 @@ main(int argc, char *argv[])
 	uid = getuid();
 	euid = geteuid();
 
-#if INCLUDE_CU_INTERFACE
 	if (equal(sname(argv[0]), "cu")) {
 		cumode = 1;
 		cumain(argc, argv);
 		goto cucommon;
 	}
-#endif /* INCLUDE_CU_INTERFACE */
 
 	if (argc > 4)
 		usage();
@@ -213,33 +192,14 @@ cucommon:
 	 * the "cu" version of tip.
 	 */
 
-#if HAVE_TERMIOS
 	tcgetattr (0, &otermios);
 	ctermios = otermios;
-#ifndef _POSIX_SOURCE
 	ctermios.c_iflag = (IMAXBEL|IXANY|ISTRIP|IXON|BRKINT);
 	ctermios.c_lflag = (PENDIN|IEXTEN|ISIG|ECHOCTL|ECHOE|ECHOKE);
-#else
-	ctermios.c_iflag = (ISTRIP|IXON|BRKINT);
-	ctermios.c_lflag = (PENDIN|IEXTEN|ISIG|ECHOE);
-#endif
 	ctermios.c_cflag = (CLOCAL|HUPCL|CREAD|CS8);
 	ctermios.c_cc[VINTR] = 	ctermios.c_cc[VQUIT] = -1;
 	ctermios.c_cc[VSUSP] = ctermios.c_cc[VDSUSP] = ctermios.c_cc[VDISCARD] =
 		ctermios.c_cc[VLNEXT] = -1;
-#else /* HAVE_TERMIOS */
-	ioctl(0, TIOCGETP, (char *)&defarg);
-	ioctl(0, TIOCGETC, (char *)&defchars);
-	ioctl(0, TIOCGLTC, (char *)&deflchars);
-	ioctl(0, TIOCGETD, (char *)&odisc);
-	arg = defarg;
-	arg.sg_flags = ANYP | CBREAK;
-	tchars = defchars;
-	tchars.t_intrc = tchars.t_quitc = -1;
-	ltchars = deflchars;
-	ltchars.t_suspc = ltchars.t_dsuspc = ltchars.t_flushc
-		= ltchars.t_lnextc = -1;
-#endif /* HAVE_TERMIOS */
 	raw();
 
 	pipe(fildes); pipe(repdes);
@@ -287,10 +247,6 @@ cleanup(int signo)
 
 	daemon_uid();
 	(void)uu_unlock(uucplock);
-#if !HAVE_TERMIOS
-	if (odisc)
-		ioctl(0, TIOCSETD, (char *)&odisc);
-#endif
 	exit(0);
 }
 
@@ -340,15 +296,7 @@ shell_uid(void)
 void
 raw(void)
 {
-#if HAVE_TERMIOS
 	tcsetattr (0, TCSANOW, &ctermios);
-#else /* HAVE_TERMIOS */
-
-	ioctl(0, TIOCSETP, &arg);
-	ioctl(0, TIOCSETC, &tchars);
-	ioctl(0, TIOCSLTC, &ltchars);
-	ioctl(0, TIOCSETD, (char *)&disc);
-#endif /* HAVE_TERMIOS */
 }
 
 
@@ -358,15 +306,7 @@ raw(void)
 void
 unraw(void)
 {
-#if HAVE_TERMIOS
 	tcsetattr (0, TCSANOW, &otermios);
-#else /* HAVE_TERMIOS */
-
-	ioctl(0, TIOCSETD, (char *)&odisc);
-	ioctl(0, TIOCSETP, (char *)&defarg);
-	ioctl(0, TIOCSETC, (char *)&defchars);
-	ioctl(0, TIOCSLTC, (char *)&deflchars);
-#endif /* HAVE_TERMIOS */
 }
 
 static	jmp_buf promptbuf;
@@ -501,16 +441,7 @@ escape(void)
 int
 speed(int n)
 {
-#if HAVE_TERMIOS
 	return (n);
-#else
-	CONST int *p;
-
-	for (p = bauds; *p != -1;  p++)
-		if (*p == n)
-			return (p - bauds);
-	return (NULL);
-#endif
 }
 
 int
@@ -587,7 +518,7 @@ help(int c)
 			continue;
 		printf("%2s", ctrl(character(value(ESCAPE))));
 		printf("%-2s %c   %s\r\n", ctrl(p->e_char),
-			p->e_flags&EXP ? '*': ' ', p->e_help);
+			(p->e_flags&EXP) ? '*': ' ', p->e_help);
 	}
 }
 
@@ -597,31 +528,16 @@ help(int c)
 void
 ttysetup (int speed)
 {
-#if HAVE_TERMIOS
 	struct termios termios;
 	tcgetattr (FD, &termios);
 	if (boolean(value(TAND)))
 		termios.c_iflag = IXOFF;
 	else
 		termios.c_iflag = 0;
-#ifndef _POSIX_SOURCE
 	termios.c_lflag = (PENDIN|ECHOKE|ECHOE);
-#else
-	termios.c_lflag = (PENDIN|ECHOE);
-#endif
 	termios.c_cflag = (CLOCAL|HUPCL|CREAD|CS8);
 	termios.c_ispeed = termios.c_ospeed = speed;
 	tcsetattr (FD, TCSANOW, &termios);
-#else /* HAVE_TERMIOS */
-	unsigned bits = LDECCTQ;
-
-	arg.sg_ispeed = arg.sg_ospeed = speed;
-	arg.sg_flags = RAW;
-	if (boolean(value(TAND)))
-		arg.sg_flags |= TANDEM;
-	ioctl(FD, TIOCSETP, (char *)&arg);
-	ioctl(FD, TIOCLBIS, (char *)&bits);
-#endif /* HAVE_TERMIOS */
 }
 
 /*

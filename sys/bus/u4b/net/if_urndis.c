@@ -90,7 +90,6 @@ SYSCTL_INT(_hw_usb_urndis, OID_AUTO, debug, CTLFLAG_RW, &urndis_debug, 0,
 #endif
 
 static const struct usb_config urndis_config[URNDIS_N_TRANSFER] = {
-
 	[URNDIS_BULK_RX] = {
 		.type = UE_BULK,
 		.endpoint = UE_ADDR_ANY,
@@ -257,8 +256,7 @@ urndis_attach(device_t dev)
 	}
 
 	if ((error != 0) || (i == 32)) {
-		device_printf(dev, "No valid alternate "
-		    "setting found\n");
+		device_printf(dev, "No valid alternate setting found\n");
 		goto detach;
 	}
 	URNDIS_LOCK(sc);
@@ -686,11 +684,10 @@ urndis_ctrl_halt(struct urndis_softc *sc)
 	rval = urndis_ctrl_send(sc, &msg, sizeof(msg));
 
 	if (rval != RNDIS_STATUS_SUCCESS)
-		printf("halt failed\n");
+		DPRINTF("halt failed\n");
 
 	return (rval);
 }
-
 #endif
 
 static uint32_t
@@ -944,7 +941,7 @@ tr_setup:
 
 			usbd_xfer_set_frame_offset(xfer, x * RNDIS_TX_MAXLEN, x);
 
-	next_pkt:
+next_pkt:
 			m = ifq_dequeue(&ifp->if_snd);
 
 			if (m == NULL)
@@ -991,6 +988,7 @@ tr_setup:
 		/* count output errors */
 		IFNET_STAT_INC(ifp, oerrors, 1);
 		ifq_clr_oactive(&ifp->if_snd);
+
 		if (error != USB_ERR_CANCELLED) {
 			/* try to clear stall first */
 			usbd_xfer_set_stall(xfer);

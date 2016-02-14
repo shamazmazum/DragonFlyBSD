@@ -24,7 +24,6 @@
  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * $FreeBSD: src/usr.sbin/boot0cfg/boot0cfg.c,v 1.7.2.4 2002/03/16 01:06:51 mikeh Exp $
- * $DragonFly: src/usr.sbin/boot0cfg/boot0cfg.c,v 1.6 2008/03/24 23:04:19 swildner Exp $
  */
 
 #include <sys/param.h>
@@ -39,6 +38,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fstab.h>
 
 #define MBRSIZE         512     /* master boot record size */
 
@@ -78,7 +78,6 @@ static void display_mbr(u_int8_t *);
 static int boot0version(const u_int8_t *);
 static int boot0bs(const u_int8_t *);
 static void stropt(const char *, int *, int *);
-static char *mkrdev(const char *);
 static int argtoi(const char *, int, int, int);
 static void usage(void);
 
@@ -140,7 +139,11 @@ main(int argc, char *argv[])
     argv += optind;
     if (argc != 1)
         usage();
-    disk = mkrdev(*argv);
+
+    disk = getdevpath(*argv, 0);
+    if (!disk)
+	err(1, "cannot open disk %s", disk);
+
     up = B_flag || d_arg != -1 || m_arg != -1 || o_flag || s_arg != -1
 	|| t_arg != -1;
 
@@ -238,11 +241,14 @@ read_mbr(const char *disk, u_int8_t **mbr, int check_version)
 	    err(1, "%s", disk);
 	if (n != mbr_size)
 	    errx(1, "%s: short read", disk);
+	close(fd);
 	return (mbr_size);
     }
-    *mbr = malloc(sizeof(buf));
-    memcpy(*mbr, buf, sizeof(buf));
 
+    if ((*mbr = malloc(sizeof(buf))) == NULL)
+	errx(1, "%s: unable to allocate mbr buffer", disk);
+    memcpy(*mbr, buf, sizeof(buf));
+    close(fd);
     return sizeof(buf);
 }
 
@@ -387,26 +393,6 @@ stropt(const char *arg, int *xa, int *xo)
             *xo |= x;
     }
     free(s);
-}
-
-/*
- * Produce a device path for a "canonical" name, where appropriate.
- */
-static char *
-mkrdev(const char *fname)
-{
-    char buf[MAXPATHLEN];
-    char *s;
-
-    if (!strchr(fname, '/')) {
-	snprintf(buf, sizeof(buf), "%s%s", _PATH_DEV, fname);
-        s = strdup(buf);
-    } else
-        s = strdup(fname);
-
-    if (s == NULL)
-        errx(1, "No more memory");
-    return s;
 }
 
 /*

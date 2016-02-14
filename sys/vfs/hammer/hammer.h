@@ -626,6 +626,11 @@ typedef enum hammer_io_type {
 	HAMMER_STRUCTURE_DUMMY
 } hammer_io_type_t;
 
+/*
+ * XXX: struct hammer_io can't directly embed LIST_ENTRY() at offset 0,
+ * since a list head in struct buf expects a struct called worklist for
+ * list entries.  HAMMER needs to define and use struct worklist.
+ */
 struct worklist {
 	LIST_ENTRY(worklist) node;
 };
@@ -634,7 +639,7 @@ TAILQ_HEAD(hammer_io_list, hammer_io);
 typedef struct hammer_io_list *hammer_io_list_t;
 
 struct hammer_io {
-	struct worklist		worklist;
+	struct worklist		worklist; /* must be at offset 0 */
 	struct hammer_lock	lock;
 	enum hammer_io_type	type;
 	struct hammer_mount	*hmp;
@@ -643,7 +648,7 @@ struct hammer_io {
 	TAILQ_ENTRY(hammer_io)	iorun_entry; /* iorun_list */
 	struct hammer_mod_rb_tree *mod_root;
 	struct buf		*bp;
-	int64_t			offset;	   /* zone-2 offset */
+	int64_t			offset;	   /* volume offset */
 	int			bytes;	   /* buffer cache buffer size */
 	int			modify_refs;
 
@@ -687,7 +692,7 @@ typedef struct hammer_io *hammer_io_t;
  * In-memory volume representing on-disk buffer
  */
 struct hammer_volume {
-	struct hammer_io io;
+	struct hammer_io io; /* must be at offset 0 */
 	RB_ENTRY(hammer_volume) rb_node;
 	struct hammer_volume_ondisk *ondisk;
 	int32_t	vol_no;
@@ -699,11 +704,13 @@ struct hammer_volume {
 
 typedef struct hammer_volume *hammer_volume_t;
 
+#define HAMMER_ITOV(iop) ((hammer_volume_t)(iop))
+
 /*
  * In-memory buffer representing an on-disk buffer.
  */
 struct hammer_buffer {
-	struct hammer_io io;
+	struct hammer_io io; /* must be at offset 0 */
 	RB_ENTRY(hammer_buffer) rb_node;
 	void *ondisk;
 	hammer_off_t zoneX_offset;
@@ -775,18 +782,6 @@ typedef struct hammer_node_lock *hammer_node_lock_t;
 #define HAMMER_NODE_LOCK_LCACHE		0x0002
 
 /*
- * Common I/O management structure - embedded in in-memory structures
- * which are backed by filesystem buffers.
- */
-union hammer_io_structure {
-	struct hammer_io	io;
-	struct hammer_volume	volume;
-	struct hammer_buffer	buffer;
-};
-
-typedef union hammer_io_structure *hammer_io_structure_t;
-
-/*
  * The reserve structure prevents the blockmap from allocating
  * out of a reserved big-block.  Such reservations are used by
  * the direct-write mechanism.
@@ -798,7 +793,7 @@ typedef union hammer_io_structure *hammer_io_structure_t;
 struct hammer_reserve {
 	RB_ENTRY(hammer_reserve) rb_node;
 	TAILQ_ENTRY(hammer_reserve) delay_entry;
-	int		flush_group;
+	int		flg_no;
 	int		flags;
 	int		refs;
 	int		zone;
@@ -923,7 +918,6 @@ struct hammer_mount {
 
 	struct netexport export;
 	struct hammer_lock sync_lock;
-	struct hammer_lock free_lock;
 	struct hammer_lock undo_lock;
 	struct hammer_lock blkmap_lock;
 	struct hammer_lock snapshot_lock;
@@ -973,11 +967,6 @@ typedef struct hammer_mount	*hammer_mount_t;
 	for (n = 0; n < HAMMER_MAX_VOLUMES; n++)		\
 		if (HAMMER_VOLUME_NUMBER_IS_SET(hmp, n))
 
-struct hammer_sync_info {
-	int error;
-	int waitfor;
-};
-
 /*
  * Minium buffer cache bufs required to rebalance the B-Tree.
  * This is because we must hold the children and the children's children
@@ -1003,7 +992,6 @@ struct hammer_sync_info {
 extern struct vop_ops hammer_vnode_vops;
 extern struct vop_ops hammer_spec_vops;
 extern struct vop_ops hammer_fifo_vops;
-extern struct bio_ops hammer_bioops;
 
 extern int hammer_debug_io;
 extern int hammer_debug_general;
@@ -1678,6 +1666,22 @@ static __inline uint32_t
 hammer_dir_localization(hammer_inode_t dip)
 {
 	return(HAMMER_DIR_INODE_LOCALIZATION(&dip->ino_data));
+}
+
+static __inline
+hammer_io_t
+hammer_buf_peek_io(struct buf *bp)
+{
+	return((hammer_io_t)LIST_FIRST(&bp->b_dep));
+}
+
+static __inline
+void
+hammer_buf_attach_io(struct buf *bp, hammer_io_t io)
+{
+	/* struct buf and struct hammer_io are 1:1 */
+	KKASSERT(hammer_buf_peek_io(bp) == NULL);
+	LIST_INSERT_HEAD(&bp->b_dep, &io->worklist, node);
 }
 
 #define hkprintf(format, args...)			\

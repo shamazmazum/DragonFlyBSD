@@ -58,7 +58,6 @@ struct hammer_flusher_info {
 	struct hammer_mount *hmp;
 	thread_t	td;
 	int		runstate;
-	int		count;
 	hammer_flush_group_t flg;
 	struct hammer_transaction trans;        /* per-slave transaction */
 };
@@ -166,7 +165,7 @@ hammer_flusher_async_one(hammer_mount_t hmp)
 void
 hammer_flusher_wait(hammer_mount_t hmp, int seq)
 {
-	while ((int)(seq - hmp->flusher.done) > 0)
+	while (seq - hmp->flusher.done > 0)
 		tsleep(&hmp->flusher.done, 0, "hmrfls", 0);
 }
 
@@ -179,7 +178,7 @@ int
 hammer_flusher_running(hammer_mount_t hmp)
 {
 	int seq = hmp->flusher.next - 1;
-	if ((int)(seq - hmp->flusher.done) > 0)
+	if (seq - hmp->flusher.done > 0)
 		return(1);
 	return (0);
 }
@@ -357,7 +356,7 @@ hammer_flusher_flush(hammer_mount_t hmp, int *nomorep)
 		 * filesystem error occurred which forced the filesystem into
 		 * read-only mode.
 		 */
-		KKASSERT((int)(flg->seq - seq) > 0 || hmp->ronly >= 2);
+		KKASSERT(flg->seq - seq > 0 || hmp->ronly >= 2);
 		flg = NULL;
 	}
 
@@ -449,7 +448,7 @@ hammer_flusher_flush(hammer_mount_t hmp, int *nomorep)
 	 * it can no longer be reused.
 	 */
 	while ((resv = TAILQ_FIRST(&hmp->delay_list)) != NULL) {
-		if ((int)(resv->flush_group - seq) > 0)
+		if (resv->flg_no - seq > 0)
 			break;
 		hammer_reserve_clrdelay(hmp, resv);
 	}
@@ -482,7 +481,6 @@ hammer_flusher_slave_thread(void *arg)
 		RB_SCAN(hammer_fls_rb_tree, &flg->flush_tree, NULL,
 			hammer_flusher_flush_inode, info);
 
-		info->count = 0;
 		info->runstate = 0;
 		info->flg = NULL;
 		TAILQ_REMOVE(&hmp->flusher.run_list, info, entry);

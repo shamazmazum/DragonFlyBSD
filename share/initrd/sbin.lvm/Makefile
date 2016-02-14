@@ -79,9 +79,10 @@ SYMLINKS+=	lvm ${BINDIR}/lvchange \
 		lvm ${BINDIR}/vgscan \
 		lvm ${BINDIR}/vgsplit
 
-LDADD+=		-llvm -ldevmapper -lprop -ledit -ltermcap -ldevattr
+LDADD+=		-llvm -ldevmapper -lprop -lprivate_edit -lprivate_termcap -ldevattr
 DPADD+=		${LIBLVM} ${LIBDEVMAPPER} ${LIBPROP} ${LIBEDIT} ${LIBTERMCAP}
 DPADD+=		${LIBDEVATTR}
+LDFLAGS+=	-rpath /lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 .PATH:	${LVM2_DISTDIR}/tools
 

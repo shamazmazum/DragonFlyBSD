@@ -140,8 +140,12 @@ struct e1000_hw;
 #define E1000_DEV_ID_PCH_LPTLP_I218_V		0x1559
 #define E1000_DEV_ID_PCH_I218_LM2		0x15A0
 #define E1000_DEV_ID_PCH_I218_V2		0x15A1
-#define E1000_DEV_ID_PCH_I218_LM3		0x15A2 /* Wildcat Point PCH */
-#define E1000_DEV_ID_PCH_I218_V3		0x15A3 /* Wildcat Point PCH */
+#define E1000_DEV_ID_PCH_I218_LM3		0x15A2	/* Wildcat Point PCH */
+#define E1000_DEV_ID_PCH_I218_V3		0x15A3	/* Wildcat Point PCH */
+#define E1000_DEV_ID_PCH_SPT_I219_LM		0x156F	/* SPT */
+#define E1000_DEV_ID_PCH_SPT_I219_V		0x1570
+#define E1000_DEV_ID_PCH_SPT_I219_LM2		0x15B7
+#define E1000_DEV_ID_PCH_SPT_I219_V2		0x15B8
 
 #define E1000_DEV_ID_82576			0x10C9
 #define E1000_DEV_ID_82576_FIBER		0x10E6
@@ -180,6 +184,7 @@ struct e1000_hw;
 #define E1000_DEV_ID_I211_COPPER		0x1539
 #define E1000_DEV_ID_I354_BACKPLANE_1GBPS	0x1F40
 #define E1000_DEV_ID_I354_SGMII			0x1F41
+#define E1000_DEV_ID_I354_BACKPLANE_2_5GBPS	0x1F45
 #define E1000_DEV_ID_DH89XXCC_SGMII		0x0438
 #define E1000_DEV_ID_DH89XXCC_SERDES		0x043A
 #define E1000_DEV_ID_DH89XXCC_BACKPLANE		0x043C
@@ -229,6 +234,7 @@ enum e1000_mac_type {
 	e1000_pchlan,
 	e1000_pch2lan,
 	e1000_pch_lpt,
+	e1000_pch_spt,
 	e1000_82575,
 	e1000_82576,
 	e1000_82580,
@@ -794,7 +800,7 @@ struct e1000_mac_info {
 	u16 uta_reg_count;
 
 	/* Maximum size of the MTA register table in all supported adapters */
-	#define MAX_MTA_REG 128
+#define MAX_MTA_REG 128
 	u32 mta_shadow[MAX_MTA_REG];
 	u16 rar_entry_count;
 

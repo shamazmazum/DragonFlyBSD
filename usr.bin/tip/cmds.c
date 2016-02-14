@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,7 +30,6 @@
  * $FreeBSD: src/usr.bin/tip/tip/cmds.c,v 1.11.2.2 2000/07/01 12:24:23 ps Exp $
  */
 
-#include "tipconf.h"
 #include "tip.h"
 #include "pathnames.h"
 
@@ -73,39 +68,25 @@ static void xfer(char *, int, char *);
 static void
 usedefchars(void)
 {
-#if HAVE_TERMIOS
 	int cnt;
 	struct termios ttermios;
 	ttermios = ctermios;
 	for (cnt = 0; cnt < NCCS; cnt++)
 		ttermios.c_cc [cnt] = otermios.c_cc [cnt];
 	tcsetattr (0, TCSANOW, &ttermios);
-#else
-	ioctl(0, TIOCSETC, &defchars);
-#endif
 }
 
 static void
 usetchars(void)
 {
-#if HAVE_TERMIOS
 	tcsetattr (0, TCSANOW, &ctermios);
-#else
-	ioctl(0, TIOCSETC, &tchars);
-#endif
 }
 
 static void
 flush_remote(void)
 {
-#ifdef TIOCFLUSH
 	int cmd = 0;
 	ioctl (FD, TIOCFLUSH, &cmd);
-#else
-	struct sgttyb buf;
-	ioctl (FD, TIOCGETP, &buf);	/* this does a */
-	ioctl (FD, TIOCSETP, &buf);	/*   wflushtty */
-#endif
 }
 
 /*
@@ -636,8 +617,6 @@ pipeout(int c)
 	signal(SIGQUIT, SIG_DFL);
 }
 
-#if CONNECT
-
 int
 tiplink (char *cmd, unsigned int flags)
 {
@@ -704,7 +683,6 @@ consh(int c)
 		return;
 	tiplink (buf, TL_SIGNAL_TIPOUT | TL_VERBOSE);
 }
-#endif
 
 /*
  * Escape to local shell
@@ -926,7 +904,6 @@ variable(int c)
 static void
 tandem(char *option)
 {
-#if HAVE_TERMIOS
 	struct termios ttermios;
 	tcgetattr (FD, &ttermios);
 	if (strcmp(option,"on") == 0) {
@@ -939,20 +916,6 @@ tandem(char *option)
 	}
 	tcsetattr (FD, TCSANOW, &ttermios);
 	tcsetattr (0, TCSANOW, &ctermios);
-#else /* HAVE_TERMIOS */
-	struct sgttyb rmtty;
-
-	ioctl(FD, TIOCGETP, &rmtty);
-	if (strcmp(option,"on") == 0) {
-		rmtty.sg_flags |= TANDEM;
-		arg.sg_flags |= TANDEM;
-	} else {
-		rmtty.sg_flags &= ~TANDEM;
-		arg.sg_flags &= ~TANDEM;
-	}
-	ioctl(FD, TIOCSETP, &rmtty);
-	ioctl(0,  TIOCSETP, &arg);
-#endif /* HAVE_TERMIOS */
 }
 
 /*

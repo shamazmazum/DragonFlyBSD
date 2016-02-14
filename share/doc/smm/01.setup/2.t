@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -30,8 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)2.t	8.1 (Berkeley) 7/27/93
-.\" $FreeBSD: src/share/doc/smm/01.setup/2.t,v 1.7 1999/08/28 00:18:35 peter Exp $
-.\" $DragonFly: src/share/doc/smm/01.setup/2.t,v 1.2 2003/06/17 04:36:57 dillon Exp $
+.\" $FreeBSD: head/share/doc/smm/01.setup/2.t 263142 2014-03-14 03:07:51Z eadler $
 .\"
 .ds lq ``
 .ds rq ''
@@ -69,7 +64,7 @@ found in previous BSD distributions.
 Our primary development environment is the HP9000/300 series machines.
 The other architectures are developed and supported by
 people outside the university.
-Consequently, we are not able to directly test or maintain these 
+Consequently, we are not able to directly test or maintain these
 other architectures, so cannot comment on their robustness,
 reliability, or completeness.
 .Sh 2 "Bootstrapping from the tape"
@@ -407,7 +402,7 @@ will be discussed later.
 .PP
 UNIX itself then runs for the first time and begins by printing out a banner
 identifying the release and
-version of the system that is in use and the date that it was compiled. 
+version of the system that is in use and the date that it was compiled.
 .PP
 Next the
 .I mem
@@ -483,13 +478,7 @@ lw(2i) l.
 \fB#\fP \fImount_mfs -s 1000 -T type /dev/null /tmp\fP	(create a writable filesystem)
 (\fItype\fP is the disk type as determined from /etc/disktab)
 \fB#\fP \fIcd /tmp\fP	(connect to that directory)
-\fB#\fP \fI../dev/MAKEDEV \*(Dk#\fP	(create special files for root disk)
-(\fI\*(Dk\fP is the disk type, \fI#\fP is the unit number)
-(ignore warning from ``sh'')
 \fB#\fP \fImount \-uw /tmp/\*(Dk#a /\fP	(read-write mount root filesystem)
-\fB#\fP \fIcd /dev\fP	(go to device directory)
-\fB#\fP \fI./MAKEDEV \*(Dk#\fP	(create permanent special files for root disk)
-(again, ignore warning from ``sh'')
 .TE
 .DE
 .Sh 4 "Step 4: (optional) restoring the root filesystem"
@@ -514,8 +503,6 @@ To really create the root filesystem on drive 1
 you should first label the disk as described in step 5 below.
 Then run the following commands:
 .DS
-\fB#\fP \fIcd /dev\fP
-\fB#\fP \fI./MAKEDEV \*(Dk1a\fP
 \fB#\fP\|\fInewfs /dev/r\*(Dk1a\fP
 \fB#\fP\|\fImount /dev/\*(Dk1a /mnt\fP
 \fB#\fP\|\fIcd /mnt\fP
@@ -873,7 +860,7 @@ A spare, formatted SCSI disk is also useful.
 This procedure is similar to the HP300.
 If you have an extra disk, the easiest approach is to use \fIdd\fP\|(1)
 under ULTRIX to copy the root filesystem image to the beginning
-of the spare disk. 
+of the spare disk.
 The root filesystem image includes a disklabel and bootblock along with the
 root filesystem.
 An example command to copy the image to the beginning of a disk is:
@@ -925,7 +912,7 @@ The `m' argument tells the kernel to look for a root filesystem in memory.
 Next you should proceed to section 2.4.3 to build a disk-based root filesystem.
 .Sh 4 "Procedure C: bootstrap over the network"
 .PP
-You will need a host machine that is running the \fIbootp\fP server 
+You will need a host machine that is running the \fIbootp\fP server
 with the
 .Pn kernel.net
 file installed in the default directory defined by the
@@ -1394,8 +1381,6 @@ To make the
 .Pn /var
 filesystem we would do:
 .DS
-\fB#\fP \fIcd /dev\fP
-\fB#\fP \fIMAKEDEV \*(Dk1\fP
 \fB#\fP \fIdisklabel -wr \*(Dk1 "disk type" "disk name"\fP
 \fB#\fP \fInewfs \*(Dk1f\fP
 (information about filesystem prints out)
@@ -1582,7 +1567,7 @@ Many of the X11 utilities search using the path
 so be sure that you have a symbolic link that points at
 the location of your X11 binaries (here, X11R5).
 .PP
-Having now completed the extraction of the sources, 
+Having now completed the extraction of the sources,
 you may want to verify that your
 .Pn /usr/src
 filesystem is consistent.

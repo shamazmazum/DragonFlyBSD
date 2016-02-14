@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -149,7 +149,7 @@ main (
 
     /* Example warning and error output */
 
-    ACPI_INFO        ((AE_INFO, "Example ACPICA info message"));
+    ACPI_INFO        (("Example ACPICA info message"));
     ACPI_WARNING     ((AE_INFO, "Example ACPICA warning message"));
     ACPI_ERROR       ((AE_INFO, "Example ACPICA error message"));
     ACPI_EXCEPTION   ((AE_INFO, AE_AML_OPERAND_TYPE,
@@ -185,21 +185,12 @@ InitializeFullAcpica (void)
 
     /* Initialize the ACPICA Table Manager and get all ACPI tables */
 
-    ACPI_INFO ((AE_INFO, "Loading ACPI tables"));
+    ACPI_INFO (("Loading ACPI tables"));
 
     Status = AcpiInitializeTables (NULL, 16, FALSE);
     if (ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status, "While initializing Table Manager"));
-        return (Status);
-    }
-
-    /* Create the ACPI namespace from ACPI tables */
-
-    Status = AcpiLoadTables ();
-    if (ACPI_FAILURE (Status))
-    {
-        ACPI_EXCEPTION ((AE_INFO, Status, "While loading ACPI tables"));
         return (Status);
     }
 
@@ -218,6 +209,15 @@ InitializeFullAcpica (void)
     if (ACPI_FAILURE (Status))
     {
         ACPI_EXCEPTION ((AE_INFO, Status, "While enabling ACPICA"));
+        return (Status);
+    }
+
+    /* Create the ACPI namespace from ACPI tables */
+
+    Status = AcpiLoadTables ();
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_EXCEPTION ((AE_INFO, Status, "While loading ACPI tables"));
         return (Status);
     }
 
@@ -297,14 +297,6 @@ InitializeAcpi (
         return (Status);
     }
 
-    /* Create the ACPI namespace from ACPI tables */
-
-    Status = AcpiLoadTables ();
-    if (ACPI_FAILURE (Status))
-    {
-        return (Status);
-    }
-
     /* Install local handlers */
 
     Status = InstallHandlers ();
@@ -317,6 +309,14 @@ InitializeAcpi (
     /* Initialize the ACPI hardware */
 
     Status = AcpiEnableSubsystem (ACPI_FULL_INITIALIZATION);
+    if (ACPI_FAILURE (Status))
+    {
+        return (Status);
+    }
+
+    /* Create the ACPI namespace from ACPI tables */
+
+    Status = AcpiLoadTables ();
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -347,7 +347,7 @@ NotifyHandler (
     void                        *Context)
 {
 
-    ACPI_INFO ((AE_INFO, "Received a notify 0x%X", Value));
+    ACPI_INFO (("Received a notify 0x%X", Value));
 }
 
 
@@ -382,7 +382,7 @@ RegionHandler (
     void                        *RegionContext)
 {
 
-    ACPI_INFO ((AE_INFO, "Received a region access"));
+    ACPI_INFO (("Received a region access"));
 
     return (AE_OK);
 }
@@ -442,7 +442,7 @@ ExecuteOSI (void)
     ACPI_OBJECT             *Object;
 
 
-    ACPI_INFO ((AE_INFO, "Executing _OSI reserved method"));
+    ACPI_INFO (("Executing _OSI reserved method"));
 
     /* Setup input argument */
 
@@ -481,7 +481,7 @@ ExecuteOSI (void)
         AcpiOsPrintf ("Invalid return type from _OSI, %.2X\n", Object->Type);
     }
 
-    ACPI_INFO ((AE_INFO, "_OSI returned 0x%8.8X",
+    ACPI_INFO (("_OSI returned 0x%8.8X",
         (UINT32) Object->Integer.Value));
 
 
@@ -509,7 +509,7 @@ ExecuteMAIN (void)
     ACPI_OBJECT             *Object;
 
 
-    ACPI_INFO ((AE_INFO, "Executing MAIN method"));
+    ACPI_INFO (("Executing MAIN method"));
 
     /* Setup input argument */
 

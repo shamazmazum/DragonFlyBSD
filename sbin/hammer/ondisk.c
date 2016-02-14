@@ -51,7 +51,6 @@ uuid_t Hammer_FSId;
 int64_t BootAreaSize;
 int64_t MemAreaSize;
 int64_t UndoBufferSize;
-int     NumVolumes;
 int	RootVolNo = -1;
 int	UseReadBehind = -4;
 int	UseReadAhead = 4;
@@ -210,12 +209,6 @@ check_volume(struct volume_info *vol)
 		vol->device_offset = pinfo.media_offset;
 		vol->type = "DEVICE";
 	}
-
-	/*
-	 * Reserve space for (future) header junk, setup our poor-man's
-	 * big-block allocator.
-	 */
-	vol->vol_alloc = HAMMER_BUFSIZE * 16;
 }
 
 struct volume_info *
@@ -291,8 +284,8 @@ get_buffer(hammer_off_t buf_offset, int isnew)
 				buf);
 		}
 		buf->buf_offset = buf_offset;
-		buf->raw_offset = volume->ondisk->vol_buf_beg +
-				  (buf_offset & HAMMER_OFF_SHORT_MASK);
+		buf->raw_offset = hammer_xlate_to_phys(volume->ondisk,
+							buf_offset);
 		buf->volume = volume;
 		hi = buffer_hash(buf_offset);
 		TAILQ_INSERT_TAIL(&volume->buffer_lists[hi], buf, entry);

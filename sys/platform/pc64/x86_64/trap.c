@@ -448,8 +448,11 @@ trap(struct trapframe *frame)
 			 * multiple fault in user mode.
 			 */
 			MAKEMPSAFE(have_mplock);
-			kprintf("kernel trap %d with interrupts disabled\n",
-			    type);
+			kprintf("kernel trap %d (%s @ 0x%016jx) with "
+				"interrupts disabled\n",
+				type,
+				td->td_comm,
+				frame->tf_rip);
 		}
 		cpu_enable_intr();
 	}
@@ -516,8 +519,8 @@ trap(struct trapframe *frame)
 		case T_PAGEFLT:		/* page fault */
 			i = trap_pfault(frame, TRUE);
 			if (frame->tf_rip == 0) {
-				kprintf("T_PAGEFLT: Warning %%rip == 0!\n");
 #ifdef DDB
+				/* used for kernel debugging only */
 				while (freeze_on_seg_fault)
 					tsleep(p, 0, "freeze", hz * 20);
 #endif

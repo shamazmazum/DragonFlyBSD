@@ -8,6 +8,7 @@ UTILDIR=${.CURDIR}/../../../sys/contrib/dev/acpica/source/compiler
 
 PROG=	iasl
 MAN=	iasl.8
+WARNS?=	2
 
 SRCS=	\
 	aslcompiler.y.h \
@@ -33,7 +34,9 @@ SRCS=	\
 	aslbtypes.c \
 	aslcodegen.c \
 	aslcompile.c \
+	asldebug.c \
 	aslerror.c \
+	aslexternal.c \
 	aslfiles.c \
 	aslfileio.c \
 	aslfold.c \
@@ -76,6 +79,7 @@ SRCS=	\
 	asluuid.c \
 	aslwalks.c \
 	aslxref.c \
+	aslxrefout.c \
 	cmfsize.c \
 	dbfileio.c \
 	dmbuffer.c \

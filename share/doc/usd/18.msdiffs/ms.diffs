@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -268,7 +264,7 @@ This document was produced with:
 \&.OH  \'\ef\^IThe  -mx  Macros\'\'Page  %\ef\^P\'
 \&.EH  \'\ef\^IPage  %\'\'The  -mx  Macros\ef\^P\'
 .DE
-Note that it would be a error to have an apostrophe in the header text;
+Note that it would be an error to have an apostrophe in the header text;
 if you need one, you will have to use a different delimiter
 around the left, center, and right portions of the title.
 You can use any character as a delimiter, provided it doesn't appear
@@ -284,4 +280,3 @@ and macros to format the optional cover page.
 The code for the \*ms package lives in /usr/lib/tmac/tmac.s,
 and sourced files reside in the directory /usr/ucb/lib/ms.
 .sp
-.tl '''\*(DY'

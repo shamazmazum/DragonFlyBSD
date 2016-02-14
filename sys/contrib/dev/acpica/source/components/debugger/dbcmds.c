@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -406,7 +406,7 @@ AcpiDbDisplayTableInfo (
         {
             /* If the pointer is null, the table has been unloaded */
 
-            ACPI_INFO ((AE_INFO, "%4.4s - Table has been unloaded",
+            ACPI_INFO (("%4.4s - Table has been unloaded",
                 TableDesc->Signature.Ascii));
         }
     }

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -185,7 +185,7 @@ AcpiTbCopyDsdt (
         ACPI_PTR_TO_PHYSADDR (NewTable),
         ACPI_TABLE_ORIGIN_INTERNAL_VIRTUAL, NewTable);
 
-    ACPI_INFO ((AE_INFO,
+    ACPI_INFO ((
         "Forced DSDT copy: length 0x%05X copied locally, original unmapped",
         NewTable->Length));
 
@@ -419,7 +419,7 @@ NextTable:
  *
  * PARAMETERS:  Signature           - Sig string to be validated
  *
- * RETURN:      TRUE if signature is correct length and has valid characters
+ * RETURN:      TRUE if signature is has 4 valid ACPI characters
  *
  * DESCRIPTION: Validate an ACPI table signature.
  *
@@ -431,13 +431,6 @@ AcpiIsValidSignature (
 {
     UINT32                  i;
 
-
-    /* Validate the signature length */
-
-    if (strlen (Signature) != ACPI_NAME_SIZE)
-    {
-        return (FALSE);
-    }
 
     /* Validate each character in the signature */
 

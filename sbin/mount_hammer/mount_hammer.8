@@ -30,7 +30,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd September 27, 2009
+.Dd December 31, 2015
 .Dt MOUNT_HAMMER 8
 .Os
 .Sh NAME
@@ -116,6 +116,8 @@ read-write or downgrade it to read-only.
 Note that issuing a read-only mount which requires UNDOs to be run will
 still run the UNDOs, but will not flush the buffer cache buffers until/if
 the mount is updated to read-write.
+.Sh EXIT STATUS
+.Ex -std
 .Sh EXAMPLES
 Mount a
 .Nm HAMMER
@@ -125,14 +127,21 @@ file system made up of two volumes onto
 mount_hammer -o ro,noatime /dev/ad0s1d /dev/ad1s1d /mnt
 .Ed
 .Pp
+Above is equivalent to below using blkdevs format for
+.Nm HAMMER
+volumes as
+.Nm
+supports both formats.
+.Bd -literal -offset indent
+mount_hammer -o ro,noatime /dev/ad0s1d:/dev/ad1s1d /mnt
+.Ed
+.Pp
 A corresponding
 .Xr fstab 5
 entry is:
 .Bd -literal -offset indent
 /dev/ad0s1d:/dev/ad1s1d /mnt hammer ro,noatime
 .Ed
-.Sh DIAGNOSTICS
-Exit status is 0 on success and 1 on error.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,

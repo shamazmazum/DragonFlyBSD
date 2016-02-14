@@ -40,8 +40,7 @@
 static int64_t getsize(const char *str, int64_t minval, int64_t maxval, int pw);
 static const char *sizetostr(off_t size);
 static void trim_volume(struct volume_info *vol);
-static void format_volume(struct volume_info *vol, int nvols,const char *label,
-			off_t total_size);
+static void format_volume(struct volume_info *vol, int nvols,const char *label);
 static hammer_off_t format_root(const char *label);
 static uint64_t nowtime(void);
 static void usage(void);
@@ -59,6 +58,7 @@ main(int ac, char **av)
 	off_t avg_vol_size;
 	int ch;
 	int i;
+	int nvols;
 	int eflag = 0;
 	const char *label = NULL;
 	struct volume_info *vol;
@@ -171,17 +171,17 @@ main(int ac, char **av)
 	 */
 	ac -= optind;
 	av += optind;
-	NumVolumes = ac;
+	nvols = ac;
 	RootVolNo = 0;
 
-	if (NumVolumes == 0) {
+	if (nvols == 0) {
 		fprintf(stderr,
 			"newfs_hammer: You must specify at least one "
 			"special file (volume)\n");
 		exit(1);
 	}
 
-	if (NumVolumes > HAMMER_MAX_VOLUMES) {
+	if (nvols > HAMMER_MAX_VOLUMES) {
 		fprintf(stderr,
 			"newfs_hammer: The maximum number of volumes is %d\n",
 			HAMMER_MAX_VOLUMES);
@@ -189,7 +189,7 @@ main(int ac, char **av)
 	}
 
 	total = 0;
-	for (i = 0; i < NumVolumes; ++i) {
+	for (i = 0; i < nvols; ++i) {
 		vol = setup_volume(i, av[i], 1, O_RDWR);
 
 		/*
@@ -238,7 +238,7 @@ main(int ac, char **av)
 	/*
 	 * Calculate defaults for the boot and memory area sizes.
 	 */
-	avg_vol_size = total / NumVolumes;
+	avg_vol_size = total / nvols;
 	BootAreaSize = init_boot_area_size(BootAreaSize, avg_vol_size);
 	MemAreaSize = init_mem_area_size(MemAreaSize, avg_vol_size);
 
@@ -246,10 +246,10 @@ main(int ac, char **av)
 	 * Format the volumes.  Format the root volume first so we can
 	 * bootstrap the freemap.
 	 */
-	format_volume(get_volume(RootVolNo), NumVolumes, label, total);
-	for (i = 0; i < NumVolumes; ++i) {
+	format_volume(get_volume(RootVolNo), nvols, label);
+	for (i = 0; i < nvols; ++i) {
 		if (i != RootVolNo)
-			format_volume(get_volume(i), NumVolumes, label, total);
+			format_volume(get_volume(i), nvols, label);
 	}
 
 	/*
@@ -264,7 +264,7 @@ main(int ac, char **av)
 
 	printf("---------------------------------------------\n");
 	printf("%d volume%s total size %s version %d\n",
-		NumVolumes, (NumVolumes == 1 ? "" : "s"),
+		nvols, (nvols == 1 ? "" : "s"),
 		sizetostr(total), HammerVersion);
 	printf("root-volume:         %s\n", vol->name);
 	printf("boot-area-size:      %s\n", sizetostr(BootAreaSize));
@@ -450,13 +450,13 @@ trim_volume(struct volume_info *vol)
  */
 static
 void
-format_volume(struct volume_info *vol, int nvols, const char *label,
-	      off_t total_size __unused)
+format_volume(struct volume_info *vol, int nvols, const char *label)
 {
 	struct volume_info *root_vol;
 	struct hammer_volume_ondisk *ondisk;
 	int64_t freeblks;
 	int64_t freebytes;
+	hammer_off_t vol_alloc;
 	int i;
 
 	/*
@@ -471,15 +471,21 @@ format_volume(struct volume_info *vol, int nvols, const char *label,
 	ondisk->vol_count = nvols;
 	ondisk->vol_version = HammerVersion;
 
-	ondisk->vol_bot_beg = vol->vol_alloc;
-	vol->vol_alloc += BootAreaSize;
-	ondisk->vol_mem_beg = vol->vol_alloc;
-	vol->vol_alloc += MemAreaSize;
+	/*
+	 * Reserve space for (future) header junk, setup our poor-man's
+	 * big-block allocator.
+	 */
+	vol_alloc = HAMMER_BUFSIZE * 16;  /* 262144 */
+
+	ondisk->vol_bot_beg = vol_alloc;
+	vol_alloc += BootAreaSize;
+	ondisk->vol_mem_beg = vol_alloc;
+	vol_alloc += MemAreaSize;
 
 	/*
 	 * The remaining area is the zone 2 buffer allocation area.
 	 */
-	ondisk->vol_buf_beg = vol->vol_alloc;
+	ondisk->vol_buf_beg = vol_alloc;
 	ondisk->vol_buf_end = vol->size & ~(int64_t)HAMMER_BUFMASK;
 
 	if (ondisk->vol_buf_end < ondisk->vol_buf_beg) {

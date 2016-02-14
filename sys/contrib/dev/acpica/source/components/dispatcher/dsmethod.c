@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -867,7 +867,7 @@ AcpiDsTerminateControlMethod (
         {
             if (WalkState)
             {
-                ACPI_INFO ((AE_INFO,
+                ACPI_INFO ((
                     "Marking method %4.4s as Serialized "
                     "because of AE_ALREADY_EXISTS error",
                     WalkState->MethodNode->Name.Ascii));

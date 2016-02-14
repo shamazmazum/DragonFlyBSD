@@ -51,6 +51,7 @@ SRCS	+=								\
 	radeon_semaphore.c						\
 	radeon_test.c							\
 	radeon_ttm.c							\
+	radeon_ucode.c							\
 	radeon_vm.c							\
 	atom.c								\
 	atombios_crtc.c							\
@@ -154,9 +155,7 @@ SRCS	+=								\
 	iicbus_if.h							\
 	pci_if.h
 
-CFLAGS+= -I${.CURDIR}/../../../dev/drm/radeon
-CFLAGS+= -I${SYSDIR}/contrib/dev/acpica/source/include
-
 CFLAGS+= -I${SYSDIR}/dev/drm/include
+CFLAGS+= -I${SYSDIR}/contrib/dev/acpica/source/include
 
 .include <bsd.kmod.mk>

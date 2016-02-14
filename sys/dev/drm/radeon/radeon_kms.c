@@ -106,9 +106,6 @@ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 	}
 	dev->dev_private = (void *)rdev;
 
-	/* XXX pending drm update */
-	drm_init_pdev(dev->dev, &dev->pdev);
-
 	/* update BUS flag */
 	if (drm_device_is_agp(dev)) {
 		DRM_INFO("RADEON_IS_AGP\n");
@@ -171,6 +168,8 @@ int radeon_driver_load_kms(struct drm_device *dev, unsigned long flags)
 out:
 	if (r)
 		radeon_driver_unload_kms(dev);
+
+
 	return r;
 }
 
@@ -270,10 +269,14 @@ static int radeon_info_ioctl(struct drm_device *dev, void *data, struct drm_file
 		break;
 	case RADEON_INFO_ACCEL_WORKING2:
 		if (rdev->family == CHIP_HAWAII) {
-			if (rdev->accel_working)
-				*value = 2;
-			else
+			if (rdev->accel_working) {
+				if (rdev->new_fw)
+					*value = 3;
+				else
+					*value = 2;
+			} else {
 				*value = 0;
+			}
 		} else {
 			*value = rdev->accel_working;
 		}

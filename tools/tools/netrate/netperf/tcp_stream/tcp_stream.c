@@ -4,47 +4,94 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #define NETPERF_CMD	"netperf"
 #define NETPERF_PATH	"/usr/local/bin/" NETPERF_CMD
 
+#ifndef __DECONST
+#define __DECONST(type, var)    ((type)(uintptr_t)(const void *)(var))
+#endif
+
 struct netperf_child {
 	int		pipes[2];
+	pid_t		pid;
 };
+
+static struct netperf_child *instance;
+static int ninstance;
 
 static void
 usage(const char *cmd)
 {
-	fprintf(stderr, "%s -H host [-l len_s] [-i instances] [-m msgsz] "
-	    "[-r|-s]\n", cmd);
+	fprintf(stderr, "%s -H host [-H host1] [-l len_s] [-i instances] "
+	    "[-m msgsz] [-S sockbuf] [-r|-s] [-x]\n", cmd);
 	exit(1);
+}
+
+static void
+sigint_handler(int sig __unused)
+{
+	int i;
+
+	for (i = 0; i < ninstance; ++i) {
+		if (instance[i].pid != -1)
+			kill(instance[i].pid, SIGKILL);
+	}
+	kill(getpid(), SIGKILL);
 }
 
 int
 main(int argc, char *argv[])
 {
-	struct netperf_child *instance;
-	char len_str[32];
+	char len_str[32], sockbuf_str[64], msgsz_str[64];
 	char *args[32];
-	const char *host, *msgsz;
-	volatile int ninst, set_minmax = 0;
-	int len, ninst_done;
+	const char *msgsz, *sockbuf;
+	const char **host;
+	volatile int set_minmax = 0, nhost, dual;
+	int len, ninst, ninst_done, host_idx, host_arg_idx, test_arg_idx;
 	int opt, i, null_fd;
 	volatile int reverse = 0, sfile = 0;
 	double result, res_max, res_min, jain;
+	sigset_t nset, oset;
 
-	host = NULL;
+	dual = 0;
 	ninst = 2;
 	len = 10;
 	msgsz = NULL;
+	sockbuf = NULL;
 
-	while ((opt = getopt(argc, argv, "H:i:l:m:rs")) != -1) {
+	host_idx = 0;
+	nhost = 8;
+	host = malloc(sizeof(const char *) * nhost);
+	if (host == NULL)
+		err(1, "malloc failed");
+
+	while ((opt = getopt(argc, argv, "H:S:i:l:m:rsx")) != -1) {
 		switch (opt) {
 		case 'H':
-			host = optarg;
+			if (host_idx == nhost) {
+				const char **new_host;
+
+				nhost *= 2;
+				new_host = malloc(sizeof(const char *) * nhost);
+				if (new_host == NULL)
+					err(1, "malloc failed");
+				memcpy(new_host, host,
+				    host_idx * sizeof(const char *));
+				free(host);
+				host = new_host;
+			}
+			host[host_idx++] = optarg;
+			break;
+
+		case 'S':
+			sockbuf = optarg;
 			break;
 
 		case 'i':
@@ -69,11 +116,17 @@ main(int argc, char *argv[])
 			sfile = 1;
 			break;
 
+		case 'x':
+			dual = 1;
+			break;
+
 		default:
 			usage(argv[0]);
 		}
 	}
-	if (ninst <= 0 || host == NULL || len <= 0)
+	nhost = host_idx;
+
+	if (ninst <= 0 || nhost == 0 || len <= 0)
 		usage(argv[0]);
 
 	snprintf(len_str, sizeof(len_str), "%d", len);
@@ -82,24 +135,41 @@ main(int argc, char *argv[])
 	args[i++] = __DECONST(char *, NETPERF_CMD);
 	args[i++] = __DECONST(char *, "-P0");
 	args[i++] = __DECONST(char *, "-H");
-	args[i++] = __DECONST(char *, host);
+	host_arg_idx = i;
+	args[i++] = __DECONST(char *, NULL);
 	args[i++] = __DECONST(char *, "-l");
 	args[i++] = __DECONST(char *, len_str);
 	args[i++] = __DECONST(char *, "-t");
+	test_arg_idx = i;
 	if (reverse)
 		args[i++] = __DECONST(char *, "TCP_MAERTS");
 	else if (sfile)
 		args[i++] = __DECONST(char *, "TCP_SENDFILE");
 	else
 		args[i++] = __DECONST(char *, "TCP_STREAM");
-	if (msgsz != NULL) {
+	if (msgsz != NULL || sockbuf != NULL) {
 		args[i++] = __DECONST(char *, "--");
-		args[i++] = __DECONST(char *, "-m");
-		args[i++] = __DECONST(char *, msgsz);
+		if (msgsz != NULL) {
+			snprintf(msgsz_str, sizeof(msgsz_str), "%s,%s",
+			    msgsz, msgsz);
+			args[i++] = __DECONST(char *, "-m");
+			args[i++] = __DECONST(char *, msgsz_str);
+			args[i++] = __DECONST(char *, "-M");
+			args[i++] = __DECONST(char *, msgsz_str);
+		}
+		if (sockbuf != NULL) {
+			snprintf(sockbuf_str, sizeof(sockbuf_str), "%s,%s",
+			    sockbuf, sockbuf);
+			args[i++] = __DECONST(char *, "-s");
+			args[i++] = __DECONST(char *, sockbuf_str);
+			args[i++] = __DECONST(char *, "-S");
+			args[i++] = __DECONST(char *, sockbuf_str);
+		}
 	}
 	args[i] = NULL;
 
-	instance = calloc(ninst, sizeof(struct netperf_child));
+	ninstance = ninst * nhost * (dual + 1);
+	instance = calloc(ninstance, sizeof(struct netperf_child));
 	if (instance == NULL)
 		err(1, "calloc failed");
 
@@ -107,12 +177,18 @@ main(int argc, char *argv[])
 	if (null_fd < 0)
 		err(1, "open null failed");
 
-	for (i = 0; i < ninst; ++i) {
+	for (i = 0; i < ninstance; ++i) {
 		if (pipe(instance[i].pipes) < 0)
 			err(1, "pipe %dth failed", i);
+		instance[i].pid = -1;
 	}
 
-	for (i = 0; i < ninst; ++i) {
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
+	signal(SIGINT, sigint_handler);
+
+	for (i = 0; i < ninstance; ++i) {
 		pid_t pid;
 
 		pid = vfork();
@@ -121,6 +197,21 @@ main(int argc, char *argv[])
 
 			dup2(instance[i].pipes[1], STDOUT_FILENO);
 			dup2(null_fd, STDERR_FILENO);
+
+			args[host_arg_idx] = __DECONST(char *,
+			    host[i % nhost]);
+			if (dual) {
+				const char *test_type;
+
+				if ((i / nhost) & dual) {
+					test_type = sfile ?
+					    "TCP_SENDFILE" : "TCP_STREAM";
+				} else {
+					test_type = "TCP_MAERTS";
+				}
+				args[test_arg_idx] = __DECONST(char *,
+				    test_type);
+			}
 			ret = execv(NETPERF_PATH, args);
 			if (ret < 0) {
 				warn("execv %d failed", i);
@@ -133,10 +224,13 @@ main(int argc, char *argv[])
 		}
 		close(instance[i].pipes[1]);
 		instance[i].pipes[1] = -1;
+		instance[i].pid = pid;
 	}
 
+	sigprocmask(SIG_SETMASK, &oset, NULL);
+
 	ninst_done = 0;
-	while (ninst_done < ninst) {
+	while (ninst_done < ninstance) {
 		pid_t pid;
 
 		pid = waitpid(-1, NULL, 0);
@@ -149,7 +243,7 @@ main(int argc, char *argv[])
 	res_min = 0.0;
 	jain = 0.0;
 	result = 0.0;
-	for (i = 0; i < ninst; ++i) {
+	for (i = 0; i < ninstance; ++i) {
 		char line[128];
 		FILE *fp;
 
@@ -182,10 +276,12 @@ main(int argc, char *argv[])
 		fclose(fp);
 	}
 
-	jain *= ninst;
+	jain *= ninstance;
 	jain = (result * result) / jain;
 
-	printf("%s %.2f Mbps\n", reverse ? "TCP_MAERTS" : "TCP_STREAM", result);
+	printf("%s%s %.2f Mbps\n",
+	    (dual || reverse) ? "TCP_MAERTS" : "TCP_STREAM",
+	    dual ? (sfile ? "/TCP_SENDFILE" : "/TCP_STREAM") : "", result);
 	printf("min/max (jain) %.2f Mbps/%.2f Mbps (%f)\n",
 	    res_min, res_max, jain);
 

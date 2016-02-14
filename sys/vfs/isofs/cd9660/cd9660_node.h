@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,7 +33,6 @@
  *
  *	@(#)cd9660_node.h	8.6 (Berkeley) 5/14/95
  * $FreeBSD: src/sys/isofs/cd9660/cd9660_node.h,v 1.20 1999/12/29 04:54:37 peter Exp $
- * $DragonFly: src/sys/vfs/isofs/cd9660/cd9660_node.h,v 1.10 2006/09/10 01:26:40 dillon Exp $
  */
 
 #include <sys/lockf.h>
@@ -110,20 +105,20 @@ struct vop_reclaim_args;
 /*
  * Prototypes for ISOFS vnode operations
  */
-int cd9660_lookup (struct vop_old_lookup_args *);
-int cd9660_inactive (struct vop_inactive_args *);
-int cd9660_reclaim (struct vop_reclaim_args *);
-int cd9660_bmap (struct vop_bmap_args *);
-int cd9660_blkatoff (struct vnode *vp, off_t offset, char **res, struct buf **bpp);
-int cd9660_devblkatoff (struct vnode *vp, off_t offset, char **res, struct buf **bpp);
+int cd9660_lookup(struct vop_old_lookup_args *);
+int cd9660_inactive(struct vop_inactive_args *);
+int cd9660_reclaim(struct vop_reclaim_args *);
+int cd9660_bmap(struct vop_bmap_args *);
+int cd9660_blkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp);
+int cd9660_devblkatoff(struct vnode *vp, off_t offset, char **res, struct buf **bpp);
 
-void cd9660_defattr (struct iso_directory_record *,
+void cd9660_defattr(struct iso_directory_record *,
 			struct iso_node *, struct buf *, enum ISO_FTYPE);
-void cd9660_deftstamp (struct iso_directory_record *,
+void cd9660_deftstamp(struct iso_directory_record *,
 			struct iso_node *, struct buf *, enum ISO_FTYPE);
-struct vnode *cd9660_ihashget (cdev_t, ino_t);
-int cd9660_ihashins (struct iso_node *);
-int cd9660_tstamp_conv7 (u_char *, struct timespec *, enum ISO_FTYPE);
-int cd9660_tstamp_conv17 (u_char *, struct timespec *);
+struct vnode *cd9660_ihashget(cdev_t, ino_t);
+int cd9660_ihashins(struct iso_node *);
+int cd9660_tstamp_conv7(u_char *, struct timespec *, enum ISO_FTYPE);
+int cd9660_tstamp_conv17(u_char *, struct timespec *);
 
 #endif /* _KERNEL */

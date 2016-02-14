@@ -6,7 +6,8 @@ CFLAGS+=	-I. -I${.CURDIR}
 WARNS?=		3
 
 DPADD=		${LIBEDIT} ${LIBTERMCAP}
-LDADD=		-ledit -ltermcap
+LDADD=		-lprivate_edit -lprivate_termcap
+LDFLAGS+=	-rpath /lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 SCRIPTS=	bc.library
 SCRIPTSMODE=	444

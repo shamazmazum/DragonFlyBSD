@@ -39,7 +39,7 @@ CRUNCH_PROGS_bin=	\
 	sync		\
 	test
 
-CRUNCH_LIBS+= -lcrypt -ledit -lkvm -ll -lmd -ltermcap -lutil
+CRUNCH_LIBS+= -lcrypt -lprivate_edit -lkvm -ll -lmd -lprivate_termcap -lutil
 CRUNCH_BUILDTOOLS+= bin/sh
 
 # Additional options for specific programs
@@ -63,7 +63,8 @@ CRUNCH_ALIAS_ssh= scp
 
 CRUNCH_KEEP_ssh= roaming_write roaming_read add_recv_bytes
 
-CRUNCH_LIBS+= -lssh -lcrypto -lz -lpthread
+CRUNCH_LIBS+=	-lprivate_ssh -lcrypto -lz -lpthread \
+		-rpath /lib/priv:/usr/lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 .include <bsd.crunchgen.mk>
 .include <bsd.prog.mk>

@@ -629,7 +629,7 @@ The
 .Fa maxsegs ,
 which indicates the number of elements in the
 .Fa segs ,
-must be set by the caller and must be at least 1 but less than the
+must be set by the caller and must be at least 1 and at most equal the
 .Fa nsegments
 used to create the
 .Fa dmat .
@@ -768,7 +768,7 @@ Pointer to a pointer that will hold the returned KVA mapping of
 the allocated region.
 .It Fa flags
 Flags are defined as follows:
-.Bl -tag -width ".Dv BUS_DMA_NOWAIT" -compact
+.Bl -tag -width ".Dv BUS_DMA_COHERENT" -compact
 .It Dv BUS_DMA_WAITOK
 The routine can safely wait (sleep) for resources.
 .It Dv BUS_DMA_NOWAIT
@@ -786,6 +786,14 @@ bus_dmamap_sync, but it may reduce the cost of performing
 these operations.
 .It Dv BUS_DMA_ZERO
 Causes the allocated memory to be set to all zeros.
+.It Dv BUS_DMA_NOCACHE
+The allocated memory will not be cached in the processor caches.
+All memory accesses appear on the bus and are executed
+without reordering.
+On x86_64, the
+.Dv BUS_DMA_NOCACHE
+flag results in the
+Strong Uncacheable PAT to be set for the allocated virtual address range.
 .El
 .It Fa mapp
 Pointer to storage for the returned DMA map.

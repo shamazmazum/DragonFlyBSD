@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,7 +33,6 @@
  *
  *	@(#)iso_rrip.h	8.2 (Berkeley) 1/23/94
  * $FreeBSD: src/sys/isofs/cd9660/iso_rrip.h,v 1.6 1999/08/28 00:46:07 peter Exp $
- * $DragonFly: src/sys/vfs/isofs/cd9660/iso_rrip.h,v 1.3 2003/08/20 09:56:32 rob Exp $
  */
 
 
@@ -75,13 +70,13 @@ typedef struct {
 
 struct iso_directory_record;
 
-int cd9660_rrip_analyze (struct iso_directory_record *isodir,
+int cd9660_rrip_analyze(struct iso_directory_record *isodir,
 			    struct iso_node *inop, struct iso_mnt *imp);
-int cd9660_rrip_getname (struct iso_directory_record *isodir,
+int cd9660_rrip_getname(struct iso_directory_record *isodir,
 			    char *outbuf, u_short *outlen,
 			    ino_t *inump, struct iso_mnt *imp);
-int cd9660_rrip_getsymname (struct iso_directory_record *isodir,
+int cd9660_rrip_getsymname(struct iso_directory_record *isodir,
 			       char *outbuf, u_short *outlen,
 			       struct iso_mnt *imp);
-int cd9660_rrip_offset (struct iso_directory_record *isodir,
+int cd9660_rrip_offset(struct iso_directory_record *isodir,
 			   struct iso_mnt *imp);

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -148,6 +148,7 @@ ACPI_GLOBAL (ACPI_CACHE_T *,            AcpiGbl_OperandCache);
 
 ACPI_INIT_GLOBAL (UINT32,               AcpiGbl_StartupFlags, 0);
 ACPI_INIT_GLOBAL (BOOLEAN,              AcpiGbl_Shutdown, TRUE);
+ACPI_INIT_GLOBAL (BOOLEAN,              AcpiGbl_EarlyInitialization, TRUE);
 
 /* Global handlers */
 
@@ -167,7 +168,7 @@ ACPI_GLOBAL (UINT8,                     AcpiGbl_NextOwnerIdOffset);
 
 /* Initialization sequencing */
 
-ACPI_GLOBAL (BOOLEAN,                   AcpiGbl_RegMethodsExecuted);
+ACPI_INIT_GLOBAL (BOOLEAN,              AcpiGbl_NamespaceInitialized, FALSE);
 
 /* Misc */
 

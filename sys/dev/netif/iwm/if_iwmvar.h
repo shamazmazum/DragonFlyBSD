@@ -163,8 +163,7 @@ enum iwm_ucode_type {
 };
 
 struct iwm_fw_info {
-	const void *fw_rawdata;
-	size_t fw_rawsize;
+	const struct firmware *fw_fp;
 	int fw_status;
 
 	struct iwm_fw_sects {
@@ -392,6 +391,7 @@ struct iwm_softc {
 
 	struct intr_config_hook sc_preinit_hook;
 	struct callout sc_watchdog_to;
+	struct callout sc_led_blink_to;
 
 	struct task		init_task;
 	uint8_t			sc_macaddr[IEEE80211_ADDR_LEN];

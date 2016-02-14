@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -857,6 +857,7 @@ AcpiPsGetNextArg (
     case ARGP_TARGET:
     case ARGP_SUPERNAME:
     case ARGP_SIMPLENAME:
+    case ARGP_NAME_OR_REF:
 
         Subop = AcpiPsPeekOpcode (ParserState);
         if (Subop == 0                  ||
@@ -876,11 +877,12 @@ AcpiPsGetNextArg (
 
             if (WalkState->Opcode == AML_UNLOAD_OP)
             {
-                Status = AcpiPsGetNextNamepath (WalkState, ParserState, Arg, 1);
+                Status = AcpiPsGetNextNamepath (WalkState, ParserState,
+                    Arg, ACPI_POSSIBLE_METHOD_CALL);
 
                 /*
-                 * If the SuperName arg of Unload is a method call,
-                 * we have restored the AML pointer, just free this Arg
+                 * If the SuperName argument is a method call, we have
+                 * already restored the AML pointer, just free this Arg
                  */
                 if (Arg->Common.AmlOpcode == AML_INT_METHODCALL_OP)
                 {
@@ -890,7 +892,8 @@ AcpiPsGetNextArg (
             }
             else
             {
-                Status = AcpiPsGetNextNamepath (WalkState, ParserState, Arg, 0);
+                Status = AcpiPsGetNextNamepath (WalkState, ParserState,
+                    Arg, ACPI_NOT_METHOD_CALL);
             }
         }
         else

@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -79,7 +75,7 @@ File access rates of up to ten times faster than the traditional
 UNIX file system are experienced.
 Long needed enhancements to the programmers'
 interface are discussed.
-These include a mechanism to place advisory locks on files, 
+These include a mechanism to place advisory locks on files,
 extensions of the name space across file systems,
 the ability to use long file names,
 and provisions for administrative control of resource usage.
@@ -118,7 +114,7 @@ General Terms:
 file system,
 measurement,
 performance.
-.bp 
+.bp
 .ce
 .B "TABLE OF CONTENTS"
 .LP

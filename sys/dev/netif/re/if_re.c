@@ -231,7 +231,7 @@ static const struct re_hwrev re_hwrevs[] = {
 
 	{ RE_HWREV_8168D,	RE_MTU_9K,
 	  RE_C_HWIM | RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT |
-	  RE_C_AUTOPAD | RE_C_CONTIGRX | RE_C_STOP_RXTX },
+	  RE_C_AUTOPAD | RE_C_CONTIGRX | RE_C_STOP_RXTX | RE_C_PHYPMCH },
 
 	{ RE_HWREV_8168DP,	RE_MTU_9K,
 	  RE_C_HWIM | RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT |
@@ -239,7 +239,7 @@ static const struct re_hwrev re_hwrevs[] = {
 
 	{ RE_HWREV_8168E,	RE_MTU_9K,
 	  RE_C_HWIM | RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT |
-	  RE_C_AUTOPAD | RE_C_CONTIGRX | RE_C_STOP_RXTX },
+	  RE_C_AUTOPAD | RE_C_CONTIGRX | RE_C_STOP_RXTX | RE_C_PHYPMCH },
 
 	{ RE_HWREV_8168F,	RE_MTU_9K,
 	  RE_C_HWIM | RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT |
@@ -289,19 +289,19 @@ static const struct re_hwrev re_hwrevs[] = {
 
 	{ RE_HWREV_8105E,	ETHERMTU,
 	  RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT | RE_C_AUTOPAD |
-	  RE_C_STOP_RXTX | RE_C_FASTE },
+	  RE_C_STOP_RXTX | RE_C_FASTE | RE_C_PHYPMCH },
 
 	{ RE_HWREV_8401E,	ETHERMTU,
 	  RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT | RE_C_AUTOPAD |
-	  RE_C_STOP_RXTX | RE_C_FASTE },
+	  RE_C_STOP_RXTX | RE_C_FASTE | RE_C_PHYPMCH },
 
 	{ RE_HWREV_8402,	ETHERMTU,
 	  RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT | RE_C_AUTOPAD |
-	  RE_C_STOP_RXTX | RE_C_FASTE },
+	  RE_C_STOP_RXTX | RE_C_FASTE | RE_C_PHYPMCH },
 
 	{ RE_HWREV_8106E,	ETHERMTU,
 	  RE_C_HWCSUM | RE_C_MAC2 | RE_C_PHYPMGT | RE_C_AUTOPAD |
-	  RE_C_STOP_RXTX | RE_C_FASTE },
+	  RE_C_STOP_RXTX | RE_C_FASTE | RE_C_PHYPMCH },
 
 	{ RE_HWREV_NULL, 0, 0 }
 };
@@ -328,6 +328,7 @@ static int	re_tx_collect(struct re_softc *);
 static void	re_intr(void *);
 static void	re_tick(void *);
 static void	re_tick_serialized(void *);
+static void	re_disable_aspm(device_t);
 
 static void	re_start(struct ifnet *, struct ifaltq_subque *);
 static int	re_ioctl(struct ifnet *, u_long, caddr_t, struct ucred *);
@@ -544,19 +545,23 @@ re_gmii_readreg(device_t dev, int phy, int reg)
 		return(CSR_READ_1(sc, RE_GMEDIASTAT));
 
 	CSR_WRITE_4(sc, RE_PHYAR, reg << 16);
-	DELAY(1000);
 
-	for (i = 0; i < RE_TIMEOUT; i++) {
+	for (i = 0; i < RE_PHY_TIMEOUT; i++) {
 		rval = CSR_READ_4(sc, RE_PHYAR);
 		if (rval & RE_PHYAR_BUSY)
 			break;
-		DELAY(100);
+		DELAY(25);
 	}
 
-	if (i == RE_TIMEOUT) {
+	if (i == RE_PHY_TIMEOUT) {
 		device_printf(dev, "PHY read failed\n");
 		return(0);
 	}
+
+	/*
+	 * Controller requires a 20us delay to process next MDIO request.
+	 */
+	DELAY(20);
 
 	return(rval & RE_PHYAR_PHYDATA);
 }
@@ -570,17 +575,23 @@ re_gmii_writereg(device_t dev, int phy, int reg, int data)
 
 	CSR_WRITE_4(sc, RE_PHYAR,
 		    (reg << 16) | (data & RE_PHYAR_PHYDATA) | RE_PHYAR_BUSY);
-	DELAY(1000);
 
-	for (i = 0; i < RE_TIMEOUT; i++) {
+	for (i = 0; i < RE_PHY_TIMEOUT; i++) {
 		rval = CSR_READ_4(sc, RE_PHYAR);
 		if ((rval & RE_PHYAR_BUSY) == 0)
 			break;
-		DELAY(100);
+		DELAY(25);
 	}
 
-	if (i == RE_TIMEOUT)
+	if (i == RE_PHY_TIMEOUT) {
 		device_printf(dev, "PHY write failed\n");
+		return(0);
+	}
+
+	/*
+	 * Controller requires a 20us delay to process next MDIO request.
+	 */
+	DELAY(20);
 
 	return(0);
 }
@@ -1050,7 +1061,8 @@ re_probe(device_t dev)
 					/* 8105E */
 					sc->re_caps = RE_C_HWCSUM | RE_C_MAC2 |
 					    RE_C_PHYPMGT | RE_C_AUTOPAD |
-					    RE_C_STOP_RXTX | RE_C_FASTE;
+					    RE_C_STOP_RXTX | RE_C_FASTE |
+					    RE_C_PHYPMCH;
 					sc->re_maxmtu = ETHERMTU;
 					device_printf(dev, "8105E fixup\n");
 					goto ee_eaddr0;
@@ -1340,11 +1352,12 @@ static int
 re_attach(device_t dev)
 {
 	struct re_softc	*sc = device_get_softc(dev);
+	struct mii_probe_args mii_args;
 	struct ifnet *ifp;
 	struct sysctl_ctx_list *ctx;
 	struct sysctl_oid *tree;
-	uint8_t eaddr[ETHER_ADDR_LEN];
-	int error = 0, qlen, msi_enable;
+	uint8_t eaddr[ETHER_ADDR_LEN], cfg;
+	int error = 0, qlen, msi_enable, cfg5_reg;
 	u_int irq_flags;
 
 	callout_init_mp(&sc->re_timer);
@@ -1481,6 +1494,9 @@ re_attach(device_t dev)
 		goto fail;
 	}
 
+	/* Disable ASPM */
+	re_disable_aspm(dev);
+
 	/* Reset the adapter. */
 	re_reset(sc, 0);
 
@@ -1514,11 +1530,20 @@ re_attach(device_t dev)
 		      sc->re_bus_speed);
 
 	/*
-	 * NOTE:
-	 * DO NOT try to adjust config1 and config5 which was spotted in
-	 * Realtek's Linux drivers.  It will _permanently_ damage certain
-	 * cards EEPROM, e.g. one of my 8168B (0x38000000) card ...
+	 * Enable PME.
 	 */
+	if (RE_IS_8139CP(sc))
+		cfg5_reg = RE_CFG5_8139CP;
+	else
+		cfg5_reg = RE_CFG5;
+	CSR_WRITE_1(sc, RE_EECMD, RE_EE_MODE);
+	cfg = CSR_READ_1(sc, RE_CFG1);
+	cfg |= RE_CFG1_PME;
+	CSR_WRITE_1(sc, RE_CFG1, cfg);
+	cfg = CSR_READ_1(sc, cfg5_reg);
+	cfg &= RE_CFG5_PME_STS;
+	CSR_WRITE_1(sc, cfg5_reg, cfg);
+	CSR_WRITE_1(sc, RE_EECMD, RE_EEMODE_OFF);
 
 	re_get_eaddr(sc, eaddr);
 
@@ -1573,9 +1598,10 @@ re_attach(device_t dev)
 	/*
 	 * Apply some PHY fixup from Realtek ...
 	 */
-	if (sc->re_hwrev == RE_HWREV_8110S) {
-		CSR_WRITE_1(sc, 0x82, 1);
-		re_miibus_writereg(dev, 1, 0xb, 0);
+	if (sc->re_caps & RE_C_PHYPMCH) {
+		CSR_WRITE_1(sc, RE_PMCH, CSR_READ_1(sc, RE_PMCH) | 0x80);
+		if (sc->re_hwrev == RE_HWREV_8401E)
+			CSR_WRITE_1(sc, 0xD1, CSR_READ_1(sc, 0xD1) & ~0x08);
 	}
 	if (sc->re_caps & RE_C_PHYPMGT) {
 		/* Power up PHY */
@@ -1584,8 +1610,11 @@ re_attach(device_t dev)
 	}
 
 	/* Do MII setup */
-	if (mii_phy_probe(dev, &sc->re_miibus,
-	    re_ifmedia_upd, re_ifmedia_sts)) {
+	mii_probe_args_init(&mii_args, re_ifmedia_upd, re_ifmedia_sts);
+	mii_args.mii_probemask = 1 << 0;
+	if (!RE_IS_8139CP(sc))
+		mii_args.mii_probemask = 1 << 1;
+	if (mii_probe(dev, &sc->re_miibus, &mii_args)) {
 		device_printf(dev, "MII without any phy!\n");
 		error = ENXIO;
 		goto fail;
@@ -3435,4 +3464,27 @@ re_jbuf_ref(void *arg)
 		      sc->arpcom.ac_if.if_xname);
 	}
 	atomic_add_int(&jbuf->re_inuse, 1);
+}
+
+static void
+re_disable_aspm(device_t dev)
+{
+	uint16_t link_cap, link_ctrl;
+	uint8_t pcie_ptr, reg;
+
+	pcie_ptr = pci_get_pciecap_ptr(dev);
+	if (pcie_ptr == 0)
+		return;
+
+	link_cap = pci_read_config(dev, pcie_ptr + PCIER_LINKCAP, 2);
+	if ((link_cap & PCIEM_LNKCAP_ASPM_MASK) == 0)
+		return;
+
+	if (bootverbose)
+		device_printf(dev, "disable ASPM\n");
+
+	reg = pcie_ptr + PCIER_LINKCTRL;
+	link_ctrl = pci_read_config(dev, reg, 2);
+	link_ctrl &= ~(PCIEM_LNKCTL_ASPM_L0S | PCIEM_LNKCTL_ASPM_L1);
+	pci_write_config(dev, reg, link_ctrl, 2);
 }

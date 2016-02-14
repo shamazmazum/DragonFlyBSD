@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -538,7 +538,7 @@ AcpiDsBuildInternalPackageObj (
             Arg = Arg->Common.Next;
         }
 
-        ACPI_INFO ((AE_INFO,
+        ACPI_INFO ((
             "Actual Package length (%u) is larger than "
             "NumElements field (%u), truncated",
             i, ElementCount));

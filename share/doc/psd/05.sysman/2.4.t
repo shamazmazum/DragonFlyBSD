@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -75,7 +71,7 @@ Line editing
 .PP
 When the terminal is in cooked mode, editing of an input line
 is performed.  Editing facilities allow deletion of the previous
-character or word, or deletion of the current input line. 
+character or word, or deletion of the current input line.
 In addition, a special character may be used to reprint the current
 input line after some number of editing operations have been applied.
 .PP
@@ -122,7 +118,7 @@ struct ttymode {
 	int	tt_oflags;	/* output flags */
 };
 .DE
-and ``special characters'' are specified with the 
+and ``special characters'' are specified with the
 \fIttychars\fP structure,
 .DS
 ._f

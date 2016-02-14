@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,7 +89,7 @@ ACPI_STRING_TABLE           StandardDataTypes[] = {
 
 char                        DualLicenseHeader[] =
 "/*\n"
-" * Copyright (C) 2000 - 2015, Intel Corp.\n"
+" * Copyright (C) 2000 - 2016, Intel Corp.\n"
 " * All rights reserved.\n"
 " *\n"
 " * Redistribution and use in source and binary forms, with or without\n"
@@ -501,6 +501,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ASL_RESOURCE_INFO",                   SRC_TYPE_STRUCT},
     {"ASL_RESOURCE_NODE",                   SRC_TYPE_STRUCT},
     {"ASL_WALK_CALLBACK",                   SRC_TYPE_SIMPLE},
+    {"ASL_XREF_INFO",                       SRC_TYPE_STRUCT},
     {"UINT64_OVERLAY",                      SRC_TYPE_UNION},
     {"UINT64_STRUCT",                       SRC_TYPE_STRUCT},
 
@@ -606,6 +607,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_HEST_AER",                       SRC_TYPE_STRUCT},
     {"ACPI_HEST_AER_BRIDGE",                SRC_TYPE_STRUCT},
     {"ACPI_HEST_GENERIC",                   SRC_TYPE_STRUCT},
+    {"ACPI_HEST_GENERIC_V2",                SRC_TYPE_STRUCT},
     {"ACPI_HEST_GENERIC_STATUS",            SRC_TYPE_STRUCT},
     {"ACPI_HEST_GENERIC_DATA",              SRC_TYPE_STRUCT},
     {"ACPI_IBFT_HEADER",                    SRC_TYPE_STRUCT},
@@ -985,8 +987,8 @@ ACPI_CONVERSION_TABLE       LicenseConversionTable =
 
 ACPI_STRING_TABLE           CustomReplacements[] =
 {
-    {"(c) 1999 - 2014",     "(c) 1999 - 2015",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
-    {"(c) 2006 - 2014",     "(c) 2006 - 2015",         REPLACE_WHOLE_WORD}, /* Test suites */
+    {"(c) 1999 - 2016",     "(c) 1999 - 2016",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
+    {"(c) 2006 - 2016",     "(c) 2006 - 2016",         REPLACE_WHOLE_WORD}, /* Test suites */
 
 #if 0
     {"SUPPORT, ASSISTANCE", "SUPPORT, ASSISTANCE",     REPLACE_WHOLE_WORD}, /* Fix intel header */

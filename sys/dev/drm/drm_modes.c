@@ -35,6 +35,7 @@
 #include <linux/export.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
+#include <video/videomode.h>
 #include <drm/drm_modes.h>
 
 #include "drm_crtc_internal.h"
@@ -276,7 +277,7 @@ struct drm_display_mode *drm_cvt_mode(struct drm_device *dev, int hdisplay,
 		hblank = drm_mode->hdisplay * hblank_percentage /
 			 (100 * HV_FACTOR - hblank_percentage);
 		hblank -= hblank % (2 * CVT_H_GRANULARITY);
-		/* 14. find the total pixes per line */
+		/* 14. find the total pixels per line */
 		drm_mode->htotal = drm_mode->hdisplay + hblank;
 		drm_mode->hsync_end = drm_mode->hdisplay + hblank / 2;
 		drm_mode->hsync_start = drm_mode->hsync_end -
@@ -612,6 +613,45 @@ void drm_display_mode_from_videomode(const struct videomode *vm,
 	drm_mode_set_name(dmode);
 }
 
+/**
+ * drm_display_mode_to_videomode - fill in @vm using @dmode,
+ * @dmode: drm_display_mode structure to use as source
+ * @vm: videomode structure to use as destination
+ *
+ * Fills out @vm using the display mode specified in @dmode.
+ */
+void drm_display_mode_to_videomode(const struct drm_display_mode *dmode,
+				   struct videomode *vm)
+{
+	vm->hactive = dmode->hdisplay;
+	vm->hfront_porch = dmode->hsync_start - dmode->hdisplay;
+	vm->hsync_len = dmode->hsync_end - dmode->hsync_start;
+	vm->hback_porch = dmode->htotal - dmode->hsync_end;
+
+	vm->vactive = dmode->vdisplay;
+	vm->vfront_porch = dmode->vsync_start - dmode->vdisplay;
+	vm->vsync_len = dmode->vsync_end - dmode->vsync_start;
+	vm->vback_porch = dmode->vtotal - dmode->vsync_end;
+
+	vm->pixelclock = dmode->clock * 1000;
+
+	vm->flags = 0;
+	if (dmode->flags & DRM_MODE_FLAG_PHSYNC)
+		vm->flags |= DISPLAY_FLAGS_HSYNC_HIGH;
+	else if (dmode->flags & DRM_MODE_FLAG_NHSYNC)
+		vm->flags |= DISPLAY_FLAGS_HSYNC_LOW;
+	if (dmode->flags & DRM_MODE_FLAG_PVSYNC)
+		vm->flags |= DISPLAY_FLAGS_VSYNC_HIGH;
+	else if (dmode->flags & DRM_MODE_FLAG_NVSYNC)
+		vm->flags |= DISPLAY_FLAGS_VSYNC_LOW;
+	if (dmode->flags & DRM_MODE_FLAG_INTERLACE)
+		vm->flags |= DISPLAY_FLAGS_INTERLACED;
+	if (dmode->flags & DRM_MODE_FLAG_DBLSCAN)
+		vm->flags |= DISPLAY_FLAGS_DOUBLESCAN;
+	if (dmode->flags & DRM_MODE_FLAG_DBLCLK)
+		vm->flags |= DISPLAY_FLAGS_DOUBLECLK;
+}
+
 #ifdef CONFIG_OF
 /**
  * of_get_drm_display_mode - get a drm_display_mode from devicetree
@@ -735,6 +775,8 @@ EXPORT_SYMBOL(drm_mode_vrefresh);
  * - The CRTC_STEREO_DOUBLE flag can be used to compute the timings for
  *   buffers containing two eyes (only adjust the timings when needed, eg. for
  *   "frame packing" or "side by side full").
+ * - The CRTC_NO_DBLSCAN and CRTC_NO_VSCAN flags request that adjustment *not*
+ *   be performed for doublescan and vscan > 1 modes respectively.
  */
 void drm_mode_set_crtcinfo(struct drm_display_mode *p, int adjust_flags)
 {
@@ -761,18 +803,22 @@ void drm_mode_set_crtcinfo(struct drm_display_mode *p, int adjust_flags)
 		}
 	}
 
-	if (p->flags & DRM_MODE_FLAG_DBLSCAN) {
-		p->crtc_vdisplay *= 2;
-		p->crtc_vsync_start *= 2;
-		p->crtc_vsync_end *= 2;
-		p->crtc_vtotal *= 2;
+	if (!(adjust_flags & CRTC_NO_DBLSCAN)) {
+		if (p->flags & DRM_MODE_FLAG_DBLSCAN) {
+			p->crtc_vdisplay *= 2;
+			p->crtc_vsync_start *= 2;
+			p->crtc_vsync_end *= 2;
+			p->crtc_vtotal *= 2;
+		}
 	}
 
-	if (p->vscan > 1) {
-		p->crtc_vdisplay *= p->vscan;
-		p->crtc_vsync_start *= p->vscan;
-		p->crtc_vsync_end *= p->vscan;
-		p->crtc_vtotal *= p->vscan;
+	if (!(adjust_flags & CRTC_NO_VSCAN)) {
+		if (p->vscan > 1) {
+			p->crtc_vdisplay *= p->vscan;
+			p->crtc_vsync_start *= p->vscan;
+			p->crtc_vsync_end *= p->vscan;
+			p->crtc_vtotal *= p->vscan;
+		}
 	}
 
 	if (adjust_flags & CRTC_STEREO_DOUBLE) {
@@ -853,6 +899,12 @@ EXPORT_SYMBOL(drm_mode_duplicate);
  */
 bool drm_mode_equal(const struct drm_display_mode *mode1, const struct drm_display_mode *mode2)
 {
+	if (!mode1 && !mode2)
+		return true;
+
+	if (!mode1 || !mode2)
+		return false;
+
 	/* do clock check convert to PICOS so fb modes get matched
 	 * the same */
 	if (mode1->clock && mode2->clock) {
@@ -902,30 +954,62 @@ bool drm_mode_equal_no_clocks_no_stereo(const struct drm_display_mode *mode1,
 EXPORT_SYMBOL(drm_mode_equal_no_clocks_no_stereo);
 
 /**
+ * drm_mode_validate_basic - make sure the mode is somewhat sane
+ * @mode: mode to check
+ *
+ * Check that the mode timings are at least somewhat reasonable.
+ * Any hardware specific limits are left up for each driver to check.
+ *
+ * Returns:
+ * The mode status
+ */
+enum drm_mode_status
+drm_mode_validate_basic(const struct drm_display_mode *mode)
+{
+	if (mode->clock == 0)
+		return MODE_CLOCK_LOW;
+
+	if (mode->hdisplay == 0 ||
+	    mode->hsync_start < mode->hdisplay ||
+	    mode->hsync_end < mode->hsync_start ||
+	    mode->htotal < mode->hsync_end)
+		return MODE_H_ILLEGAL;
+
+	if (mode->vdisplay == 0 ||
+	    mode->vsync_start < mode->vdisplay ||
+	    mode->vsync_end < mode->vsync_start ||
+	    mode->vtotal < mode->vsync_end)
+		return MODE_V_ILLEGAL;
+
+	return MODE_OK;
+}
+EXPORT_SYMBOL(drm_mode_validate_basic);
+
+/**
  * drm_mode_validate_size - make sure modes adhere to size constraints
- * @dev: DRM device
- * @mode_list: list of modes to check
+ * @mode: mode to check
  * @maxX: maximum width
  * @maxY: maximum height
  *
  * This function is a helper which can be used to validate modes against size
  * limitations of the DRM device/connector. If a mode is too big its status
- * memeber is updated with the appropriate validation failure code. The list
+ * member is updated with the appropriate validation failure code. The list
  * itself is not changed.
+ *
+ * Returns:
+ * The mode status
  */
-void drm_mode_validate_size(struct drm_device *dev,
-			    struct list_head *mode_list,
-			    int maxX, int maxY)
+enum drm_mode_status
+drm_mode_validate_size(const struct drm_display_mode *mode,
+		       int maxX, int maxY)
 {
-	struct drm_display_mode *mode;
+	if (maxX > 0 && mode->hdisplay > maxX)
+		return MODE_VIRTUAL_X;
 
-	list_for_each_entry(mode, mode_list, head) {
-		if (maxX > 0 && mode->hdisplay > maxX)
-			mode->status = MODE_VIRTUAL_X;
+	if (maxY > 0 && mode->vdisplay > maxY)
+		return MODE_VIRTUAL_Y;
 
-		if (maxY > 0 && mode->vdisplay > maxY)
-			mode->status = MODE_VIRTUAL_Y;
-	}
+	return MODE_OK;
 }
 EXPORT_SYMBOL(drm_mode_validate_size);
 
@@ -1009,7 +1093,7 @@ EXPORT_SYMBOL(drm_mode_sort);
 /**
  * drm_mode_connector_list_update - update the mode list for the connector
  * @connector: the connector to update
- * @merge_type_bits: whether to merge or overright type bits.
+ * @merge_type_bits: whether to merge or overwrite type bits
  *
  * This moves the modes from the @connector probed_modes list
  * to the actual mode list. It compares the probed mode against the current
@@ -1070,7 +1154,7 @@ EXPORT_SYMBOL(drm_mode_connector_list_update);
  *	<xres>x<yres>[M][R][-<bpp>][@<refresh>][i][m][eDd]
  *
  * The intermediate drm_cmdline_mode structure is required to store additional
- * options from the command line modline like the force-enabel/disable flag.
+ * options from the command line modline like the force-enable/disable flag.
  *
  * Returns:
  * True if a valid modeline has been parsed, false otherwise.

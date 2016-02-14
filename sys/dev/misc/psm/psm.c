@@ -295,7 +295,6 @@ struct psm_softc {		/* Driver status information */
 	struct cdev	*bdev;
 	int		lasterr;
 	int		cmdcount;
-	struct sigio	*async;		/* Processes waiting for SIGIO */
 };
 static devclass_t psm_devclass;
 #define PSM_SOFTC(unit)	 ((struct psm_softc*)devclass_get_softc(psm_devclass, unit))
@@ -1135,14 +1134,14 @@ psmprobe(device_t dev)
 	sc->kbdc = atkbdc_open(device_get_unit(device_get_parent(dev)));
 	sc->config = flags & PSM_CONFIG_FLAGS;
 	/* XXX: for backward compatibility */
-#if defined(PSM_HOOKRESUME) || defined(PSM_HOOKAPM)
+#if defined(PSM_HOOKRESUME)
 	sc->config |=
 #ifdef PSM_RESETAFTERSUSPEND
 	PSM_CONFIG_HOOKRESUME | PSM_CONFIG_INITAFTERSUSPEND;
 #else
 	PSM_CONFIG_HOOKRESUME;
 #endif
-#endif /* PSM_HOOKRESUME | PSM_HOOKAPM */
+#endif /* PSM_HOOKRESUME */
 	sc->flags = 0;
 	if (bootverbose)
 		++verbose;
@@ -1511,7 +1510,6 @@ psmopen(struct dev_open_args *ap)
 	sc->mode.level = sc->dflt_mode.level;
 	sc->mode.protocol = sc->dflt_mode.protocol;
 	sc->watchdog = FALSE;
-	sc->async = NULL;
 
 	/* flush the event queue */
 	sc->queue.count = 0;

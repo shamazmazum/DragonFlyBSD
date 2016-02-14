@@ -101,7 +101,7 @@ usbpf_uninit(void *arg)
 	struct usb_bus *ubus;
 	int error;
 	int i;
-	
+
 	if_clone_detach(&usbpf_cloner);
 
 	dc = devclass_find(usbusname);
@@ -121,7 +121,6 @@ usbpf_uninit(void *arg)
 static int
 usbpf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data, struct ucred *cr)
 {
-	
 	/* No configuration allowed. */
 	return (EINVAL);
 }
@@ -191,7 +190,7 @@ usbpf_clone_destroy(struct ifnet *ifp)
 	bpfdetach(ifp);
 	if_detach(ifp);
 	if_free(ifp);
-	
+
 	return (0);
 }
 
@@ -360,10 +359,10 @@ usbpf_xfertap(struct usb_xfer *xfer, int type)
 	/* sanity checks */
 	if (bus->ifp == NULL)
 		return;
-	/* XXX this is not needed on dragonfly 
+#if 0 /* XXX this is not needed on dragonfly */
 	if (!bpf_peers_present(bus->ifp->if_bpf))
 		return;
-	*/
+#endif
 	totlen = usbpf_xfer_precompute_size(xfer, type);
 
 	if (type == USBPF_XFERTAP_SUBMIT)

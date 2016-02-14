@@ -15,11 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -65,22 +61,21 @@
 #include "cd9660_node.h"
 #include "iso_rrip.h"
 
-static int cd9660_access (struct vop_access_args *);
-static int cd9660_advlock (struct vop_advlock_args *);
-static int cd9660_getattr (struct vop_getattr_args *);
-static int cd9660_ioctl (struct vop_ioctl_args *);
-static int cd9660_pathconf (struct vop_pathconf_args *);
-static int cd9660_open (struct vop_open_args *);
-static int cd9660_read (struct vop_read_args *);
-static int cd9660_setattr (struct vop_setattr_args *);
+static int cd9660_access(struct vop_access_args *);
+static int cd9660_advlock(struct vop_advlock_args *);
+static int cd9660_getattr(struct vop_getattr_args *);
+static int cd9660_ioctl(struct vop_ioctl_args *);
+static int cd9660_pathconf(struct vop_pathconf_args *);
+static int cd9660_open(struct vop_open_args *);
+static int cd9660_read(struct vop_read_args *);
+static int cd9660_setattr(struct vop_setattr_args *);
 struct isoreaddir;
-static int iso_uiodir (struct isoreaddir *idp, struct dirent *dp,
-			   off_t off);
-static int iso_shipdir (struct isoreaddir *idp);
-static int cd9660_readdir (struct vop_readdir_args *);
-static int cd9660_readlink (struct vop_readlink_args *ap);
-static int cd9660_strategy (struct vop_strategy_args *);
-static int cd9660_print (struct vop_print_args *);
+static int iso_uiodir(struct isoreaddir *idp, struct dirent *dp, off_t off);
+static int iso_shipdir(struct isoreaddir *idp);
+static int cd9660_readdir(struct vop_readdir_args *);
+static int cd9660_readlink(struct vop_readlink_args *ap);
+static int cd9660_strategy(struct vop_strategy_args *);
+static int cd9660_print(struct vop_print_args *);
 
 /*
  * Setattr call. Only allowed for block and character special devices.
@@ -94,22 +89,22 @@ cd9660_setattr(struct vop_setattr_args *ap)
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
 
-  	if (vap->va_flags != (u_long)VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
+	if (vap->va_flags != (u_long)VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
 	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
 	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL)
 		return (EROFS);
 	if (vap->va_size != (u_quad_t)VNOVAL) {
- 		switch (vp->v_type) {
- 		case VDIR:
- 			return (EISDIR);
+		switch (vp->v_type) {
+		case VDIR:
+			return (EISDIR);
 		case VLNK:
 		case VREG:
 		case VDATABASE:
 			return (EROFS);
- 		case VCHR:
- 		case VBLK:
- 		case VSOCK:
- 		case VFIFO:
+		case VCHR:
+		case VBLK:
+		case VSOCK:
+		case VFIFO:
 		default:
 			return (0);
 		}
@@ -134,7 +129,7 @@ cd9660_access(struct vop_access_args *ap)
 
 	KKASSERT(vp->v_mount->mnt_flag & MNT_RDONLY);
 	return (vop_helper_access(ap, ip->inode.iso_uid, ip->inode.iso_gid,
-	    		ip->inode.iso_mode, 0));
+				  ip->inode.iso_mode, 0));
 }
 
 /*
@@ -205,14 +200,14 @@ cd9660_ioctl(struct vop_ioctl_args *ap)
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
 
-        switch (ap->a_command) {
+	switch (ap->a_command) {
 
-        case FIOGETLBA:
+	case FIOGETLBA:
 		*(int *)(ap->a_data) = ip->iso_start;
 		return 0;
-        default:
-                return (ENOTTY);
-        }
+	default:
+		return (ENOTTY);
+	}
 }
 
 /*
@@ -526,7 +521,7 @@ cd9660_readdir(struct vop_readdir_args *ap)
 		switch (imp->iso_ftype) {
 		case ISO_FTYPE_RRIP:
 		{
-			ino_t cur_fileno = idp->current.de.d_ino;	
+			ino_t cur_fileno = idp->current.de.d_ino;
 			cd9660_rrip_getname(ep,idp->current.de.d_name, &namelen,
 					   &cur_fileno,imp);
 			idp->current.de.d_ino = cur_fileno;
@@ -544,13 +539,13 @@ cd9660_readdir(struct vop_readdir_args *ap)
 				idp->current.de.d_namlen = 2;
 				error = iso_uiodir(idp,&idp->current.de,idp->curroff);
 			} else {
-                                isofntrans(ep->name,idp->current.de.d_namlen,
-                                           idp->current.de.d_name, &namelen,
-                                           imp->iso_ftype == ISO_FTYPE_9660,
-                                           isonum_711(ep->flags)&4,
-                                           imp->joliet_level,
-                                           imp->im_flags,
-                                           imp->im_d2l);
+				isofntrans(ep->name,idp->current.de.d_namlen,
+					   idp->current.de.d_name, &namelen,
+					   imp->iso_ftype == ISO_FTYPE_9660,
+					   isonum_711(ep->flags)&4,
+					   imp->joliet_level,
+					   imp->im_flags,
+					   imp->im_d2l);
 				idp->current.de.d_namlen = namelen;
 				if (imp->iso_ftype == ISO_FTYPE_DEFAULT)
 					error = iso_shipdir(idp);
@@ -631,7 +626,7 @@ cd9660_readlink(struct vop_readlink_args *ap)
 	 * Get parents directory record block that this inode included.
 	 */
 	error = bread(imp->im_devvp,
-			(off_t)ip->i_number & ~((1 << imp->im_bshift) - 1),
+		      (off_t)ip->i_number & ~((1 << imp->im_bshift) - 1),
 		      imp->logical_block_size, &bp);
 	if (error) {
 		brelse(bp);
@@ -661,7 +656,7 @@ cd9660_readlink(struct vop_readlink_args *ap)
 		symname = uio->uio_iov->iov_base;
 	else
 		symname = objcache_get(namei_oc, M_WAITOK);
-	
+
 	/*
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
@@ -791,7 +786,6 @@ cd9660_advlock(struct vop_advlock_args *ap)
 	return (lf_advlock(ap, &(ip->i_lockf), ip->i_size));
 }
 
-
 /*
  * Global vfs data structures for cd9660
  */
@@ -840,4 +834,3 @@ struct vop_ops cd9660_fifo_vops = {
 	.vop_reclaim =		cd9660_reclaim,
 	.vop_setattr =		cd9660_setattr,
 };
-

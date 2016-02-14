@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -38,7 +34,7 @@
 .de DT
 .if t .ta .5i 1.25i 2.5i 3.75i
 .\" 3.5i went to 3.8i
-.if n .ta .7i 1.75i 3.8i 
+.if n .ta .7i 1.75i 3.8i
 ..
 .bd S B 3
 .TL

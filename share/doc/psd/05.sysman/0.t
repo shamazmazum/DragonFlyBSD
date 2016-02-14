@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -285,7 +281,7 @@ A number of system standard types are defined in the include file
 .I <sys/types.h>
 and used in the specifications here and in many C programs.
 These include \fBcaddr_t\fP giving a memory address (typically as
-a character pointer), 
+a character pointer),
 \fBoff_t\fP giving a file offset (typically as a long integer),
 and a set of unsigned types \fBu_char\fP, \fBu_short\fP, \fBu_int\fP
 and \fBu_long\fP, shorthand names for \fBunsigned char\fP, \fBunsigned

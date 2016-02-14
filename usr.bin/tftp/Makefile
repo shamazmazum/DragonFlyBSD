@@ -3,6 +3,7 @@
 PROG=	tftp
 SRCS=	main.c tftp.c tftpsubs.c
 DPADD=	${LIBEDIT} ${LIBTERMCAP}
-LDADD=	-ledit -ltermcap
+LDADD=	-lprivate_edit -lprivate_termcap
+LDFLAGS+=	-rpath /lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 .include <bsd.prog.mk>

@@ -86,7 +86,6 @@ static devclass_t xhci_devclass;
 DRIVER_MODULE(xhci, pci, xhci_driver, xhci_devclass, NULL, NULL);
 MODULE_DEPEND(xhci, usb, 1, 1, 1);
 
-
 static const char *
 xhci_pci_match(device_t self)
 {
@@ -194,6 +193,8 @@ xhci_pci_attach(device_t self)
 	/* check for USB 3.0 controllers which don't support 64-bit DMA */
 	switch (pci_get_devid(self)) {
 	case 0x01941033:	/* NEC uPD720200 USB 3.0 controller */
+	case 0x00141912:        /* NEC uPD720201 USB 3.0 controller */
+	case 0x78141022:	/* AMD A10-7300, tested does not work w/64-bit DMA */
 		usedma32 = 1;
 		break;
 	default:

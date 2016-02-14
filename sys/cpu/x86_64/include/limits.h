@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -36,6 +32,8 @@
 
 #ifndef _CPU_LIMITS_H_
 #define	_CPU_LIMITS_H_
+
+#include <sys/cdefs.h>
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	6		/* Allow 31 bit UTF2 */
@@ -75,32 +73,36 @@
 #define	LONG_MAX	0x7fffffffffffffffL	/* max for a long */
 #define	LONG_MIN	(-0x7fffffffffffffffL - 1) /* min for a long */
 
-/* XXX what is long long on x86_64? */
+#ifdef __LONG_LONG_SUPPORTED
 #define	ULLONG_MAX	0xffffffffffffffffULL	/* max value for an unsigned long long */
 #define	LLONG_MAX	0x7fffffffffffffffLL	/* max value for a long long */
 #define	LLONG_MIN	(-0x7fffffffffffffffLL - 1)  /* min for a long long */
+#endif
 
-#if !defined(_ANSI_SOURCE)
+#if __POSIX_VISIBLE || __XSI_VISIBLE
 #define	SSIZE_MAX	LONG_MAX	/* max value for a ssize_t */
+#endif
 
-#if !defined(_POSIX_SOURCE)
+#if __POSIX_VISIBLE >= 200112 || __XSI_VISIBLE
 #define	SIZE_T_MAX	ULONG_MAX	/* max value for a size_t */
 
 #define	OFF_MAX		LONG_MAX	/* max value for an off_t */
 #define	OFF_MIN		LONG_MIN	/* min value for an off_t */
+#endif
 
-#define GID_MAX		UINT_MAX        /* max value for a gid_t */
-#define UID_MAX		UINT_MAX        /* max value for a uid_t */
+#if __BSD_VISIBLE
+#define	GID_MAX		UINT_MAX        /* max value for a gid_t */
+#define	UID_MAX		UINT_MAX        /* max value for a uid_t */
 
 /* Quads and long longs are the same size.  Ensure they stay in sync. */
 #define	UQUAD_MAX	ULLONG_MAX	/* max value for a uquad_t */
 #define	QUAD_MAX	LLONG_MAX	/* max value for a quad_t */
 #define	QUAD_MIN	LLONG_MIN	/* min value for a quad_t */
+#endif
 
+#if __XSI_VISIBLE || __POSIX_VISIBLE >= 200809
 #define	LONG_BIT	64
 #define	WORD_BIT	32
-
-#endif /* !_POSIX_SOURCE */
-#endif /* !_ANSI_SOURCE */
+#endif
 
 #endif /* !_CPU_LIMITS_H_ */

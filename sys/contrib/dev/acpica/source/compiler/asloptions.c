@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -107,7 +107,7 @@ AslCommandLine (
 
     if (Gbl_DoTemplates)
     {
-        Status = DtCreateTemplates (Gbl_TemplateSignature);
+        Status = DtCreateTemplates (argv);
         if (ACPI_FAILURE (Status))
         {
             exit (-1);
@@ -490,6 +490,13 @@ AslDoOptions (
             Gbl_SourceOutputFlag = TRUE;
             break;
 
+        case 'x':
+
+            /* Produce cross-reference file */
+
+            Gbl_CrossReferenceOutput = TRUE;
+            break;
+
         default:
 
             printf ("Unknown option: -l%s\n", AcpiGbl_Optarg);
@@ -662,7 +669,6 @@ AslDoOptions (
     case 'T':   /* Create a ACPI table template file */
 
         Gbl_DoTemplates = TRUE;
-        Gbl_TemplateSignature = AcpiGbl_Optarg;
         break;
 
     case 'v':   /* Version and verbosity settings */

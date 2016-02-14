@@ -424,7 +424,7 @@ hammer_vop_read(struct vop_read_args *ap)
 		}
 skip:
 		if ((hammer_debug_io & 0x0001) && (bp->b_flags & B_IODEBUG)) {
-			hdkprintf("doff %016jx read file %016jx@%016jx\n",
+			hdkprintf("zone2_offset %016jx read file %016jx@%016jx\n",
 				(intmax_t)bp->b_bio2.bio_offset,
 				(intmax_t)ip->obj_id,
 				(intmax_t)bp->b_loffset);
@@ -1030,7 +1030,7 @@ hammer_vop_getattr(struct vop_getattr_args *ap)
 	if (ip->ino_data.obj_type == HAMMER_OBJTYPE_SOFTLINK &&
 	    ip->ino_data.size == 10 &&
 	    ip->obj_asof == HAMMER_MAX_TID &&
-	    ip->obj_localization == 0 &&
+	    ip->obj_localization == HAMMER_DEF_LOCALIZATION &&
 	    strncmp(ip->ino_data.ext.symlink, "@@PFS", 5) == 0) {
 		    if (ip->pfsm->pfsd.mirror_flags & HAMMER_PFSD_SLAVE)
 			    vap->va_size = 26;
@@ -1325,7 +1325,7 @@ hammer_vop_nlookupdotdot(struct vop_nlookupdotdot_args *ap)
 	lwkt_gettoken(&hmp->fs_token);
 	parent_obj_id = dip->ino_data.parent_obj_id;
 	if (dip->obj_id == HAMMER_OBJID_ROOT)
-		parent_obj_localization = dip->ino_data.ext.obj.parent_obj_localization;
+		parent_obj_localization = HAMMER_DEF_LOCALIZATION;
 	else
 		parent_obj_localization = dip->obj_localization;
 
@@ -1467,7 +1467,6 @@ hammer_vop_nmkdir(struct vop_nmkdir_args *ap)
 				    dip, nch->ncp->nc_name, nch->ncp->nc_nlen,
 				    NULL, &nip);
 	if (error) {
-		hkprintf("hammer_mkdir error %d\n", error);
 		hammer_done_transaction(&trans);
 		*ap->a_vpp = NULL;
 		lwkt_reltoken(&hmp->fs_token);
@@ -1810,7 +1809,7 @@ hammer_vop_readlink(struct vop_readlink_args *ap)
 		bytes = (int)ip->ino_data.size;
 		if (bytes == 10 &&
 		    ip->obj_asof == HAMMER_MAX_TID &&
-		    ip->obj_localization == 0 &&
+		    ip->obj_localization == HAMMER_DEF_LOCALIZATION &&
 		    strncmp(ptr, "@@PFS", 5) == 0) {
 			hammer_simple_transaction(&trans, hmp);
 			bcopy(ptr + 5, buf, 5);

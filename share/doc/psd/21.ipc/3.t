@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -30,6 +26,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)3.t	8.1 (Berkeley) 6/8/93
+.\"
+.\"	$FreeBSD: head/share/doc/psd/21.ipc/3.t 263142 2014-03-14 03:07:51Z eadler $
 .\"
 .\".ds RH "Network Library Routines
 .bp
@@ -79,8 +77,8 @@ establishment, as a discovery process must take place,
 but allows a host to be physically mobile without requiring it to
 notify its clientele of its current location.
 .PP
-Standard routines are provided for: mapping host names 
-to network addresses, network names to network numbers, 
+Standard routines are provided for: mapping host names
+to network addresses, network names to network numbers,
 protocol names to protocol numbers, and service names
 to port numbers and the appropriate protocol to
 use in communicating with the server process.  The
@@ -245,7 +243,7 @@ struct	protoent {
 .DE
 .PP
 In the NS domain, protocols are indicated by the "client type"
-field of a IDP header.  No protocol database exists; see section
+field of an IDP header.  No protocol database exists; see section
 5 for more information.
 .NH 2
 Service names
@@ -308,7 +306,7 @@ code included in client programs, such as the remote login program,
 is of the form shown in Figure 1.
 (This example will be considered in more detail in section 4.)
 .PP
-If we wanted to make the remote login program independent of the 
+If we wanted to make the remote login program independent of the
 Internet protocols and addressing scheme we would be forced to add
 a layer of routines which masked the network dependent aspects from
 the mainstream login code.  For the current facilities available in
@@ -316,7 +314,7 @@ the system this does not appear to be worthwhile.
 .PP
 Aside from the address-related data base routines, there are several
 other routines available in the run-time library which are of interest
-to users.  These are intended mostly to simplify manipulation of 
+to users.  These are intended mostly to simplify manipulation of
 names and addresses.  Table 1 summarizes the routines
 for manipulating variable length byte strings and handling byte
 swapping of network addresses and values.
@@ -378,7 +376,7 @@ main(argc, argv)
 	...
 	sp = getservbyname("login", "tcp");
 	if (sp == NULL) {
-		fprintf(stderr, "rlogin: tcp/login: unknown service\en");
+		fprintf(stderr, "rlogin: login/tcp: unknown service\en");
 		exit(1);
 	}
 	hp = gethostbyname(argv[1]);

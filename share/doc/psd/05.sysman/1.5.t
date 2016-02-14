@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -163,7 +159,7 @@ result int dopt; int d, cmd, arg;
 #define	F_SETOWN	5	/* set descriptor owner (pid/pgrp) */
 #define	F_GETOWN	6	/* get descriptor owner (pid/pgrp) */
 .DE
-The F_SETFL \fIcmd\fP may be used to set a descriptor in 
+The F_SETFL \fIcmd\fP may be used to set a descriptor in
 non-blocking I/O mode and/or enable signaling when I/O is
 possible.  F_SETOWN may be used to specify a process or process
 group to be signaled when using the latter mode of operation

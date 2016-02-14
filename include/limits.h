@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -32,7 +28,6 @@
  *
  *	@(#)limits.h	8.2 (Berkeley) 1/4/94
  * $FreeBSD: src/include/limits.h,v 1.16 2003/04/29 13:35:58 kan Exp $
- * $DragonFly: src/include/limits.h,v 1.2 2003/06/17 04:25:56 dillon Exp $
  */
 
 #ifndef _LIMITS_H_
@@ -59,6 +54,7 @@
 #define	BC_DIM_MAX		 2048	/* max array elements in bc(1) */
 #define	BC_SCALE_MAX		   99	/* max scale value in bc(1) */
 #define	BC_STRING_MAX		 1000	/* max const string length in bc(1) */
+#define	CHARCLASS_NAME_MAX	   14	/* max character class name size */
 #define	COLL_WEIGHTS_MAX	   10	/* max weights for order keyword */
 #define	EXPR_NEST_MAX		   32	/* max expressions nested in expr(1) */
 #define	LINE_MAX		 2048	/* max bytes in an input line */
@@ -110,18 +106,24 @@
 #define	_POSIX_RE_DUP_MAX	_POSIX2_RE_DUP_MAX
 #endif
 
+#if __BSD_VISIBLE || (__XSI_VISIBLE && __XSI_VISIBLE <= 600)
+#define	NL_NMAX			1
+#endif
+
+#if __XSI_VISIBLE || __POSIX_VISIBLE >= 200809
+#define	NL_ARGMAX		99	/* max # of position args for printf */
+#define	NL_MSGMAX		32767
+#define	NL_SETMAX		255
+#define	NL_TEXTMAX		2048
+#endif
+
 #if __XSI_VISIBLE
 #define	_XOPEN_IOV_MAX		16
 #define	_XOPEN_NAME_MAX		255
 #define	_XOPEN_PATH_MAX		1024
 #define	PASS_MAX		128	/* _PASSWORD_LEN from <pwd.h> */
 
-#define	NL_ARGMAX		99	/* max # of position args for printf */
 #define	NL_LANGMAX		31	/* max LANG name length */
-#define	NL_MSGMAX		32767
-#define	NL_NMAX			1
-#define	NL_SETMAX		255
-#define	NL_TEXTMAX		2048
 #endif
 
 #define	MB_LEN_MAX		6	/* 31-bit UTF-8 */

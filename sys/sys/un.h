@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,7 +31,7 @@
  */
 
 #ifndef _SYS_UN_H_
-#define _SYS_UN_H_
+#define	_SYS_UN_H_
 
 #ifndef _SYS_TYPES_H_
 #include <sys/types.h>
@@ -54,31 +50,32 @@ typedef	__uint8_t	sa_family_t;
  * Definitions for UNIX IPC domain.
  */
 struct	sockaddr_un {
-	u_char		sun_len;	/* sockaddr len including null */
+	uint8_t		sun_len;	/* sockaddr len including null */
 	sa_family_t	sun_family;	/* AF_UNIX */
 	char		sun_path[104];	/* path name (gag) */
 };
 
 /* Socket options. */
-#define LOCAL_PEERCRED		0x001		/* retrieve peer credentails */
+#define	LOCAL_PEERCRED		0x001		/* retrieve peer credentails */
 
 #ifdef _KERNEL
 struct mbuf;
 struct socket;
 struct sockopt;
+union netmsg;
 
-int	uipc_usrreq (struct socket *so, int req, struct mbuf *m,
-		struct mbuf *nam, struct mbuf *control);
-void	uipc_ctloutput (union netmsg *msg);
-int	unp_connect2 (struct socket *so, struct socket *so2);
-void	unp_dispose (struct mbuf *m);
-int	unp_externalize (struct mbuf *rights, int flags);
-void	unp_init (void);
+int	uipc_usrreq(struct socket *so, int req, struct mbuf *m,
+	    struct mbuf *nam, struct mbuf *control);
+void	uipc_ctloutput(union netmsg *msg);
+int	unp_connect2(struct socket *so, struct socket *so2);
+void	unp_dispose(struct mbuf *m);
+int	unp_externalize(struct mbuf *rights, int flags);
+void	unp_init(void);
 extern	struct pr_usrreqs uipc_usrreqs;
 #else /* !_KERNEL */
 
 /* actual length of an initialized sockaddr_un */
-#define SUN_LEN(su) \
+#define	SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 
 #endif /* _KERNEL */

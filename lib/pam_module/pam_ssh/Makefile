@@ -4,11 +4,12 @@ LIB=	pam_ssh
 SRCS=	pam_ssh.c
 MAN=	pam_ssh.8
 
-LDADD=	-lssh -lcrypto -lcrypt
+LDADD=	-lprivate_ssh -lcrypto -lcrypt
 DPADD=	${LIBSSH} ${LIBCRYPTO} ${LIBCRYPT}
 
 WARNS?=	4
 SSHDIR=		${.CURDIR}/../../../crypto/openssh
 CFLAGS+=	-I${SSHDIR} -include ssh_namespace.h
+LDFLAGS+=	-rpath /usr/lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 .include <bsd.lib.mk>

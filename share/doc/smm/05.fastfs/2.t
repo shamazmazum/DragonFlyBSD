@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -110,7 +106,7 @@ after a crash [Kowalski78].
 The file system performance was improved by a factor of more than two by
 changing the basic block size from 512 to 1024 bytes.
 The increase was because of two factors:
-each disk transfer accessed twice as much data, 
+each disk transfer accessed twice as much data,
 and most files could be described without need to access
 indirect blocks since the direct blocks contained twice as much data.
 The file system with these changes will henceforth be referred to as the
@@ -119,7 +115,7 @@ The file system with these changes will henceforth be referred to as the
 This performance improvement gave a strong indication that
 increasing the block size was a good method for improving
 throughput.
-Although the throughput had doubled, 
+Although the throughput had doubled,
 the old file system was still using only about
 four percent of the disk bandwidth.
 The main problem was that although the free list was initially

@@ -629,7 +629,7 @@ create_service(struct netconfig *nconf)
 			transp = svc_vc_create(fd, RPC_MAXDATASIZE,
 			    RPC_MAXDATASIZE);
 
-		if (transp != (SVCXPRT *) NULL) {
+		if (transp != NULL) {
 			if (!svc_reg(transp, RPCPROG_MNT, RPCMNT_VER1, mntsrv,
 				NULL))
 				syslog(LOG_ERR,
@@ -1325,11 +1325,10 @@ get_exportlist(void)
 	struct statfs *fsp, *mntbufp;
 	struct vfsconf vfc;
 	char *dirp;
-	int dirplen, num, i;
+	int num, i;
 	int done;
 
 	dirp = NULL;
-	dirplen = 0;
 
 	/*
 	 * First, get rid of the old list

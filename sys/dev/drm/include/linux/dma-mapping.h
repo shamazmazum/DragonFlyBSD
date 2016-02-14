@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 François Tigeot
+ * Copyright (c) 2015-2016 François Tigeot
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,6 +30,20 @@
 #include <linux/string.h>
 #include <linux/device.h>
 #include <linux/err.h>
+#include <linux/dma-direction.h>
 #include <linux/scatterlist.h>
+
+static inline dma_addr_t
+dma_map_page(struct device *dev, struct vm_page *page,
+    unsigned long offset, size_t size, enum dma_data_direction direction)
+{
+	return VM_PAGE_TO_PHYS(page) + offset;
+}
+
+static inline int
+dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
+{
+	return 0;
+}
 
 #endif	/* _LINUX_DMA-MAPPING_H_ */

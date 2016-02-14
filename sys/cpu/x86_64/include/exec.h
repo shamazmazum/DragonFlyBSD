@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,9 +30,9 @@
  * $FreeBSD: src/sys/amd64/include/exec.h,v 1.8 1999/08/28 00:44:11 peter Exp $
  */
 
-#ifndef	_EXEC_H_
-#define	_EXEC_H_
+#ifndef	_CPU_EXEC_H_
+#define	_CPU_EXEC_H_
 
 #define __LDPGSZ	4096
 
-#endif /* !_EXEC_H_ */
+#endif /* !_CPU_EXEC_H_ */

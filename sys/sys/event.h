@@ -33,9 +33,6 @@
 #ifndef _SYS_TYPES_H_
 #include <sys/types.h>
 #endif
-#ifndef _NET_NETISR_H_
-#include <net/netisr.h>			/* struct notifymsglist */
-#endif
 #if defined(_KERNEL) || defined(_KERNEL_STRUCTURES)
 #include <sys/queue.h>
 #endif
@@ -161,23 +158,17 @@ SLIST_HEAD(klist, knote);
  */
 struct kqinfo {
 	struct	klist ki_note;		/* kernel note list */
-	struct	notifymsglist ki_mlist;	/* list of pending predicate messages */
 };
 
 #endif
 
 #ifdef _KERNEL
 
-/*
- * Global token for kqueue subsystem
- */
-extern struct lwkt_token kq_token;
-
 #ifdef MALLOC_DECLARE
 MALLOC_DECLARE(M_KQUEUE);
 #endif
 
-#define KNOTE(list, hint)	if ((list) != NULL) knote(list, hint)
+#define KNOTE(list, hint)	if (!SLIST_EMPTY((list))) knote(list, hint)
 
 /*
  * Flag indicating hint is a signal.  Used by EVFILT_SIGNAL, and also

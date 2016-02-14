@@ -43,11 +43,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -110,7 +106,7 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD,
 enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_PC, VT_LFS, VT_LOFS, VT_UNUSED7,
 	VT_PORTAL, VT_NULL, VT_UNUSED10, VT_KERNFS, VT_PROCFS, VT_AFS,
-	VT_ISOFS, VT_UNION, VT_MSDOSFS, VT_TFS, VT_VFS, VT_CODA, VT_NTFS,
+	VT_ISOFS, VT_UNUSED15, VT_MSDOSFS, VT_TFS, VT_VFS, VT_CODA, VT_NTFS,
 	VT_HPFS, VT_SMBFS, VT_UDF, VT_EXT2FS, VT_SYNTH,
 	VT_HAMMER, VT_HAMMER2, VT_DEVFS, VT_TMPFS
 };

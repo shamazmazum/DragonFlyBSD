@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -533,7 +533,7 @@ MpXrefDevices (
 
     /* Walk the entire parse tree */
 
-    TrWalkParseTree (RootNode, ASL_WALK_VISIT_DOWNWARD,
+    TrWalkParseTree (Gbl_ParseTreeRoot, ASL_WALK_VISIT_DOWNWARD,
         MpNamespaceXrefBegin, NULL, Info);
 
     if (!Info->References)

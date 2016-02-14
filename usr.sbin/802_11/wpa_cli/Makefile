@@ -13,7 +13,8 @@ CFLAGS+= -DCONFIG_CTRL_IFACE
 CFLAGS+= -DCONFIG_CTRL_IFACE_UNIX
 CFLAGS+= -DCONFIG_READLINE
 
-LDADD+= -ledit -ltermcap
+LDADD+= -lprivate_edit -lprivate_termcap
 DPADD+= ${LIBEDIT} ${LIBTERMCAP}
+LDFLAGS+=	-rpath /lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 .include <bsd.prog.mk>

@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -30,6 +26,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)7.t	8.1 (Berkeley) 6/8/93
+.\"
+.\"	$FreeBSD: head/share/doc/smm/18.net/7.t 263142 2014-03-14 03:07:51Z eadler $
 .\"
 .nr H2 1
 .br
@@ -115,7 +113,7 @@ to carry out this request (if possible).  A ``listen'' request
 always precedes a request to accept a connection.
 .IP PRU_CONNECT
 .br
-The ``connect'' request indicates the user wants to a establish
+The ``connect'' request indicates the user wants to establish
 an association.  The \fIaddr\fP parameter supplied describes
 the peer to be connected to.  The effect of a connect request
 may vary depending on the protocol.  Virtual circuit protocols,
@@ -188,7 +186,7 @@ if the \fIioctl\fP operation pertains to a particular network interface.
 .IP PRU_SENSE
 .br
 The ``sense'' request is generated when the user makes an \fIfstat\fP
-system call on a socket; it requests status of the associated socket. 
+system call on a socket; it requests status of the associated socket.
 This currently returns a standard \fIstat\fP structure.
 It typically contains only the
 optimal transfer size for the connection (based on buffer size,

@@ -67,9 +67,10 @@ CRUNCH_ALIAS_reboot= halt
 CRUNCH_ALIAS_shutdown= poweroff
 CRUNCH_ALIAS_swapon= swapoff swapctl
 
-CRUNCH_LIBS+= -lcam -lsbuf -lutil -lkvm -lm -lmd -lhammer -lkiconv -ledit
-CRUNCH_LIBS+= -ltermcap -ldevstat -lprop -lpthread
+CRUNCH_LIBS+= -lcam -lsbuf -lutil -lkvm -lm -lmd -lhammer -lkiconv
+CRUNCH_LIBS+= -lprivate_edit -lprivate_termcap -ldevstat -lprop -lpthread
 CRUNCH_LIBS+= -lbsdxml -lipsec
+CRUNCH_LIBS+= -rpath /lib/priv -L ${_SHLIBDIRPREFIX}/usr/lib/priv
 
 CRUNCH_SRCDIRS+= usr.sbin
 CRUNCH_PROGS_usr.sbin= boot0cfg chroot

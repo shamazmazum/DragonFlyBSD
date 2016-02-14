@@ -704,6 +704,13 @@ typedef struct hammer_volume_ondisk *hammer_volume_ondisk_t;
 #define HAMMER_VOL_VERSION_SIX		6	/* DIRHASH_ALG1 */
 
 /*
+ * Translate a zone-2 address to physical address
+ */
+#define hammer_xlate_to_phys(volume, zone2_offset)	\
+	((volume)->vol_buf_beg +			\
+	 ((zone2_offset) & HAMMER_OFF_SHORT_MASK))
+
+/*
  * Record types are fairly straightforward.  The B-Tree includes the record
  * type in its index sort.
  */
@@ -771,11 +778,6 @@ struct hammer_inode_data {
 	uint64_t nlinks;	/* hard links */
 	uint64_t size;		/* filesystem object size */
 	union {
-		struct {
-			uint32_t reserved03[4];
-			uint32_t parent_obj_localization;
-			uint32_t reserved04;
-		} obj;
 		char	symlink[24];	/* HAMMER_INODE_BASESYMLEN */
 	} ext;
 	uint64_t mtime;	/* mtime must be second-to-last */
@@ -893,6 +895,7 @@ typedef struct hammer_pseudofs_data *hammer_pseudofs_data_t;
 
 #define HAMMER_MAX_PFS		65536
 #define HAMMER_MAX_PFSID	(HAMMER_MAX_PFS - 1)
+#define HAMMER_ROOT_PFSID	0
 
 /*
  * Snapshot meta-data { Objid = HAMMER_OBJID_ROOT, Key = tid, rectype = SNAPSHOT }.

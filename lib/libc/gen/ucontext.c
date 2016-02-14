@@ -40,13 +40,11 @@
 __weak_reference(_swapcontext, swapcontext);
 __weak_reference(_setcontext, setcontext);
 
-int get_mcontext(mcontext_t *);
-int set_mcontext(const mcontext_t *);
-
 /*
  * We need to block most signals during a context switch so we do not
  * dispatch a signal vector during a context switch.
  */
+#if 0
 static sigset_t sigset_block_all;
 
 static void __sigset_block_all_setup(void) __attribute__ ((constructor));
@@ -59,51 +57,39 @@ __sigset_block_all_setup(void)
 	sigdelset(&sigset_block_all, SIGBUS);
 	sigdelset(&sigset_block_all, SIGILL);
 }
+#endif
 
 /*
  * Save the calling context in (oucp) then switch to (ucp).
- *
- * Block all signals while switching contexts.  get_mcontext() returns zero
- * when retrieving a context.
- *
- * When some other thread calls set_mcontext() to resume our thread, 
- * the resume point causes get_mcontext() to return non-zero to us.
- * Signals will be blocked and we must restore the signal mask before
- * returning.
  */
 int
 _swapcontext(ucontext_t *oucp, const ucontext_t *ucp)
 {
 	int ret;
 
-	ret = _sigprocmask(SIG_BLOCK, &sigset_block_all, &oucp->uc_sigmask);
-	if (ret == 0) {
-		if (get_mcontext(&oucp->uc_mcontext) == 0) {
-			ret = set_mcontext(&ucp->uc_mcontext);
-		} else {
-			ret = _sigprocmask(SIG_SETMASK, &oucp->uc_sigmask, NULL);
-		}
+	if (getcontext(oucp) == 0) {
+		ret = sigreturn(__DECONST(ucontext_t *, ucp));
+	} else {
+		ret = 0;
 	}
 	return(ret);
 }
 
 /*
- * Switch to the target context.  The current signal mask is saved in ucp
- * and all signals are blocked.  The call to set_mcontext() causes the
- * specified context to be switched to (usually resuming as a return from
- * the get_mcontext() procedure).  The current context is thrown away.
+ * Switch to the target context, use sigreturn() to properly restore
+ * everything, including rflags and to avoid scribbling over the
+ * target stack's red-zone.
  *
- * The target context being resumed is responsible for restoring the
- * signal mask appropriate for the target context.
+ * Note that setcontext() can be called with a ucontext from a signal,
+ * so the signal state must be restored and there is really no way to
+ * avoid making a system call :-(
  */
 int
 _setcontext(ucontext_t *ucp)
 {
 	int ret;
 
-	ret = _sigprocmask(SIG_BLOCK, &sigset_block_all, &ucp->uc_sigmask);
-	if (ret == 0)
-		ret = set_mcontext(&ucp->uc_mcontext);
+	ret = sigreturn(ucp);
+
 	return(ret);
 }
-

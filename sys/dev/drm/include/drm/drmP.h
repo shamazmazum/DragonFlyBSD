@@ -1,16 +1,13 @@
-/**
- * \file drmP.h
- * Private header for Direct Rendering Manager
- *
- * \author Rickard E. (Rik) Faith <faith@valinux.com>
- * \author Gareth Hughes <gareth@valinux.com>
- */
-
 /*
+ * Internal Header for the Direct Rendering Manager
+ *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * Copyright (c) 2009-2010, Code Aurora Forum.
  * All rights reserved.
+ *
+ * Author: Rickard E. (Rik) Faith <faith@valinux.com>
+ * Author: Gareth Hughes <gareth@valinux.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,6 +109,7 @@ MALLOC_DECLARE(M_DRM);
 #include <asm/io.h>
 #include <linux/seq_file.h>
 #include <linux/types.h>
+#include <linux/vmalloc.h>
 #include <linux/wait.h>
 #include <linux/workqueue.h>
 
@@ -121,6 +119,10 @@ MALLOC_DECLARE(M_DRM);
 
 #include <drm/drm_vma_manager.h>
 
+#include <drm/drm_os_linux.h>
+#include <drm/drm_hashtab.h>
+#include <drm/drm_mm.h>
+
 struct drm_file;
 struct drm_device;
 struct drm_agp_head;
@@ -128,10 +130,8 @@ struct drm_gem_object;
 
 struct device_node;
 struct videomode;
-
-#include <drm/drm_os_linux.h>
-#include <drm/drm_hashtab.h>
-#include <drm/drm_mm.h>
+struct reservation_object;
+struct dma_buf_attachment;
 
 /*
  * 4 debug categories are defined:
@@ -147,6 +147,9 @@ struct videomode;
  *
  * PRIME: used in the prime code.
  *	  This is the category used by the DRM_DEBUG_PRIME() macro.
+ *
+ * ATOMIC: used in the atomic code.
+ *	  This is the category used by the DRM_DEBUG_ATOMIC() macro.
  *
  * Enabling verbose debug messages is done through the drm.debug parameter,
  * each category being enabled by a bit.
@@ -165,11 +168,12 @@ struct videomode;
 #define DRM_UT_DRIVER		0x02
 #define DRM_UT_KMS		0x04
 #define DRM_UT_PRIME		0x08
+#define DRM_UT_ATOMIC		0x10
 
 void drm_ut_debug_printk(const char *function_name,
 			 const char *format, ...);
 
-void drm_err(const char *func, const char *format, ...);
+void drm_err(const char *format, ...);
 
 /***********************************************************************/
 /** \name DRM template customization defaults */
@@ -188,14 +192,9 @@ void drm_err(const char *func, const char *format, ...);
 #define DRIVER_MODESET     0x2000
 #define DRIVER_PRIME       0x4000
 #define DRIVER_RENDER      0x8000
-
-/***********************************************************************/
-/** \name Begin the DRM... */
-/*@{*/
+#define DRIVER_ATOMIC      0x10000
 
 #define DRM_MAGIC_HASH_ORDER  4  /**< Size of key hash table. Must be power of 2. */
-
-/*@}*/
 
 /***********************************************************************/
 /** \name Macros to make printk easier */
@@ -210,6 +209,66 @@ void drm_err(const char *func, const char *format, ...);
 #define DRM_ERROR(fmt, ...) \
 	kprintf("error: [" DRM_NAME ":pid%d:%s] *ERROR* " fmt,		\
 	    DRM_CURRENTPID, __func__ , ##__VA_ARGS__)
+
+/**
+ * Rate limited error output.  Like DRM_ERROR() but won't flood the log.
+ *
+ * \param fmt printf() like format string.
+ * \param arg arguments
+ */
+
+#define DRM_INFO(fmt, ...)  kprintf("info: [" DRM_NAME "] " fmt , ##__VA_ARGS__)
+
+#define DRM_INFO_ONCE(fmt, ...)				\
+	printk_once(KERN_INFO "[" DRM_NAME "] " fmt, ##__VA_ARGS__)
+
+/**
+ * Debug output.
+ *
+ * \param fmt printf() like format string.
+ * \param arg arguments
+ */
+
+#define	DRM_DEBUGBITS_DEBUG		0x1
+#define	DRM_DEBUGBITS_KMS		0x2
+#define	DRM_DEBUGBITS_FAILED_IOCTL	0x4
+#define	DRM_DEBUGBITS_VERBOSE		0x8
+
+#define DRM_DEBUG(fmt, ...) do {					\
+	if ((drm_debug & DRM_DEBUGBITS_DEBUG) != 0)		\
+		kprintf("[" DRM_NAME ":pid%d:%s] " fmt, DRM_CURRENTPID,	\
+			__func__ , ##__VA_ARGS__);			\
+} while (0)
+
+#define DRM_DEBUG_VERBOSE(fmt, ...) do {				\
+	if ((drm_debug & DRM_DEBUGBITS_VERBOSE) != 0)		\
+		kprintf("[" DRM_NAME ":pid%d:%s] " fmt, DRM_CURRENTPID,	\
+			__func__ , ##__VA_ARGS__);			\
+} while (0)
+
+#define DRM_DEBUG_KMS(fmt, ...) do {					\
+	if ((drm_debug & DRM_DEBUGBITS_KMS) != 0)			\
+		kprintf("[" DRM_NAME ":KMS:pid%d:%s] " fmt, DRM_CURRENTPID,\
+			__func__ , ##__VA_ARGS__);			\
+} while (0)
+
+#define DRM_DEBUG_DRIVER(fmt, ...) do {					\
+	if ((drm_debug & DRM_DEBUGBITS_KMS) != 0)			\
+		kprintf("[" DRM_NAME ":KMS:pid%d:%s] " fmt, DRM_CURRENTPID,\
+			__func__ , ##__VA_ARGS__);			\
+} while (0)
+
+#define DRM_DEBUG_ATOMIC(fmt, args...)					\
+	do {								\
+		if (unlikely(drm_debug & DRM_UT_ATOMIC))		\
+			drm_ut_debug_printk(__func__, fmt, ##args);	\
+	} while (0)
+
+/*@}*/
+
+/***********************************************************************/
+/** \name Internal types and structures */
+/*@{*/
 
 #define	DRM_GEM_MAPPING_MASK	(3ULL << 62)
 #define	DRM_GEM_MAPPING_KEY	(2ULL << 62) /* Non-canonical address form */
@@ -228,8 +287,8 @@ SYSCTL_DECL(_hw_drm);
 #define __OS_HAS_AGP	1
 
 #define DRM_DEV_MODE	(S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP)
-#define DRM_DEV_UID	0
-#define DRM_DEV_GID	0
+#define DRM_DEV_UID	UID_ROOT
+#define DRM_DEV_GID	GID_WHEEL
 
 #define DRM_CURPROC		curthread
 #define DRM_STRUCTPROC		struct thread
@@ -277,7 +336,6 @@ do {									\
 /* Returns -errno to shared code */
 #define DRM_WAIT_ON( ret, queue, timeout, condition )		\
 for ( ret = 0 ; !ret && !(condition) ; ) {			\
-	DRM_UNLOCK(dev);					\
 	lwkt_serialize_enter(&dev->irq_lock);			\
 	if (!(condition)) {					\
             tsleep_interlock(&(queue), PCATCH);			\
@@ -287,7 +345,6 @@ for ( ret = 0 ; !ret && !(condition) ; ) {			\
         } else {                                                \
                 lwkt_serialize_exit(&dev->irq_lock);            \
         }                                                 	\
-	DRM_LOCK(dev);						\
 }
 
 int vm_phys_fictitious_reg_range(vm_paddr_t start, vm_paddr_t end,
@@ -295,49 +352,6 @@ int vm_phys_fictitious_reg_range(vm_paddr_t start, vm_paddr_t end,
 void vm_phys_fictitious_unreg_range(vm_paddr_t start, vm_paddr_t end);
 vm_page_t vm_phys_fictitious_to_vm_page(vm_paddr_t pa);
 
-/***********************************************************************/
-/** \name Macros to make printk easier */
-/*@{*/
-
-
-#define DRM_INFO(fmt, ...)  kprintf("info: [" DRM_NAME "] " fmt , ##__VA_ARGS__)
-
-#define DRM_INFO_ONCE(fmt, ...)				\
-	printk_once(KERN_INFO "[" DRM_NAME "] " fmt, ##__VA_ARGS__)
-
-#define	DRM_DEBUGBITS_DEBUG		0x1
-#define	DRM_DEBUGBITS_KMS		0x2
-#define	DRM_DEBUGBITS_FAILED_IOCTL	0x4
-#define	DRM_DEBUGBITS_VERBOSE		0x8
-
-#define DRM_DEBUG(fmt, ...) do {					\
-	if ((drm_debug & DRM_DEBUGBITS_DEBUG) != 0)		\
-		kprintf("[" DRM_NAME ":pid%d:%s] " fmt, DRM_CURRENTPID,	\
-			__func__ , ##__VA_ARGS__);			\
-} while (0)
-
-#define DRM_DEBUG_VERBOSE(fmt, ...) do {				\
-	if ((drm_debug & DRM_DEBUGBITS_VERBOSE) != 0)		\
-		kprintf("[" DRM_NAME ":pid%d:%s] " fmt, DRM_CURRENTPID,	\
-			__func__ , ##__VA_ARGS__);			\
-} while (0)
-
-#define DRM_DEBUG_KMS(fmt, ...) do {					\
-	if ((drm_debug & DRM_DEBUGBITS_KMS) != 0)			\
-		kprintf("[" DRM_NAME ":KMS:pid%d:%s] " fmt, DRM_CURRENTPID,\
-			__func__ , ##__VA_ARGS__);			\
-} while (0)
-
-#define DRM_DEBUG_DRIVER(fmt, ...) do {					\
-	if ((drm_debug & DRM_DEBUGBITS_KMS) != 0)			\
-		kprintf("[" DRM_NAME ":KMS:pid%d:%s] " fmt, DRM_CURRENTPID,\
-			__func__ , ##__VA_ARGS__);			\
-} while (0)
-
-#define DRM_LOG_KMS(fmt, ...) do {					\
-	kprintf("[" DRM_NAME ":KMS:pid%d:%s] " fmt, DRM_CURRENTPID,	\
-			__func__ , ##__VA_ARGS__);			\
-} while (0)
 
 #define	dev_dbg(dev, fmt, ...) do {					\
 	if ((drm_debug& DRM_DEBUGBITS_KMS) != 0) {			\
@@ -352,12 +366,6 @@ typedef struct drm_pci_id_list
 	long driver_private;
 	char *name;
 } drm_pci_id_list_t;
-
-struct drm_msi_blacklist_entry
-{
-	int vendor;
-	int device;
-};
 
 /**
  * Ioctl function type.
@@ -498,6 +506,8 @@ struct drm_file {
 	 * in the plane list
 	 */
 	unsigned universal_planes:1;
+	/* true if client understands atomic properties */
+	unsigned atomic:1;
 
 	pid_t		  pid;
 	uid_t		  uid;
@@ -530,23 +540,6 @@ struct drm_file {
 	int		  event_space;
 
 	struct drm_prime_file_private prime;
-};
-
-/** Wait queue */
-struct drm_queue {
-	atomic_t use_count;		/**< Outstanding uses (+1) */
-	atomic_t finalization;		/**< Finalization in progress */
-	atomic_t block_count;		/**< Count of processes waiting */
-	atomic_t block_read;		/**< Queue blocked for reads */
-	wait_queue_head_t read_queue;	/**< Processes waiting on block_read */
-	atomic_t block_write;		/**< Queue blocked for writes */
-	wait_queue_head_t write_queue;	/**< Processes waiting on block_write */
-	atomic_t total_queued;		/**< Total queued statistic */
-	atomic_t total_flushed;		/**< Total flushes statistic */
-	atomic_t total_locks;		/**< Total locks statistics */
-	enum drm_ctx_flags flags;	/**< Context preserving and 2D-only */
-	struct drm_waitlist waitlist;	/**< Pending buffers */
-	wait_queue_head_t flush_queue;	/**< Processes waiting until flush */
 };
 
 /**
@@ -879,9 +872,6 @@ struct drm_vblank_crtc {
 struct drm_device {
 	drm_pci_id_list_t *id_entry;	/* PCI ID, name, and chipset private */
 
-	uint16_t pci_subdevice;		/* PCI subsystem device id */
-	uint16_t pci_subvendor;		/* PCI subsystem vendor id */
-
 	char		  *unique;	/* Unique identifier: e.g., busid  */
 	int		  unique_len;	/* Length of unique field	   */
 	struct cdev	  *devnode;	/* Device number for mknod	   */
@@ -1028,8 +1018,6 @@ struct drm_device {
 
 	struct device *dev;             /**< Device structure */
 	struct pci_dev *pdev;		/**< PCI device structure */
-	int pci_vendor;			/**< PCI vendor id */
-	int pci_device;			/**< PCI device id */
 
 	struct drm_driver *driver;
 	struct drm_local_map *agp_buffer_map;
@@ -1122,18 +1110,15 @@ extern unsigned int drm_universal_planes;
 
 extern int drm_vblank_offdelay;
 extern unsigned int drm_timestamp_precision;
-extern unsigned int drm_timestamp_monotonic;
 
 				/* Driver support (drm_drv.h) */
 int	drm_probe(device_t kdev, drm_pci_id_list_t *idlist);
 int	drm_attach(device_t kdev, drm_pci_id_list_t *idlist);
 int	drm_create_cdevs(device_t kdev);
 d_ioctl_t drm_ioctl;
-extern int drm_lastclose(struct drm_device *dev);
 extern bool drm_ioctl_flags(unsigned int nr, unsigned int *flags);
 
 				/* Device support (drm_fops.h) */
-extern struct lock drm_global_mutex;
 d_open_t drm_open;
 d_close_t drm_close;
 d_read_t drm_read;
@@ -1223,11 +1208,15 @@ extern int drm_vblank_init(struct drm_device *dev, int num_crtcs);
 extern int drm_wait_vblank(struct drm_device *dev, void *data,
 			   struct drm_file *filp);
 extern u32 drm_vblank_count(struct drm_device *dev, int crtc);
+extern u32 drm_crtc_vblank_count(struct drm_crtc *crtc);
 extern u32 drm_vblank_count_and_time(struct drm_device *dev, int crtc,
 				     struct timeval *vblanktime);
 extern void drm_send_vblank_event(struct drm_device *dev, int crtc,
 				     struct drm_pending_vblank_event *e);
+extern void drm_crtc_send_vblank_event(struct drm_crtc *crtc,
+				       struct drm_pending_vblank_event *e);
 extern bool drm_handle_vblank(struct drm_device *dev, int crtc);
+extern bool drm_crtc_handle_vblank(struct drm_crtc *crtc);
 extern int drm_vblank_get(struct drm_device *dev, int crtc);
 extern void drm_vblank_put(struct drm_device *dev, int crtc);
 extern int drm_crtc_vblank_get(struct drm_crtc *crtc);
@@ -1237,6 +1226,7 @@ extern void drm_crtc_wait_one_vblank(struct drm_crtc *crtc);
 extern void drm_vblank_off(struct drm_device *dev, int crtc);
 extern void drm_vblank_on(struct drm_device *dev, int crtc);
 extern void drm_crtc_vblank_off(struct drm_crtc *crtc);
+extern void drm_crtc_vblank_reset(struct drm_crtc *crtc);
 extern void drm_crtc_vblank_on(struct drm_crtc *crtc);
 extern void drm_vblank_cleanup(struct drm_device *dev);
 
@@ -1264,8 +1254,6 @@ static inline wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc
 /* Modesetting support */
 extern void drm_vblank_pre_modeset(struct drm_device *dev, int crtc);
 extern void drm_vblank_post_modeset(struct drm_device *dev, int crtc);
-extern int drm_modeset_ctl(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv);
 
 				/* AGP/GART support (drm_agpsupport.h) */
 
@@ -1294,30 +1282,8 @@ int	drm_setversion(struct drm_device *dev, void *data,
 extern int drm_i_have_hw_lock(struct drm_device *dev, struct drm_file *file_priv);
 
 /* Misc. IOCTL support (drm_ioctl.c) */
-int	drm_irq_by_busid(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
-int	drm_getunique(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv);
-int	drm_setunique(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv);
-int	drm_getmap(struct drm_device *dev, void *data,
-		   struct drm_file *file_priv);
-int	drm_getclient(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv);
-int	drm_getstats(struct drm_device *dev, void *data,
-		     struct drm_file *file_priv);
-int	drm_getcap(struct drm_device *dev, void *data,
-		     struct drm_file *file_priv);
-extern int drm_setclientcap(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv);
 int	drm_noop(struct drm_device *dev, void *data,
 		 struct drm_file *file_priv);
-
-/* Authentication IOCTL support (drm_auth.c) */
-int	drm_getmagic(struct drm_device *dev, void *data,
-		     struct drm_file *file_priv);
-int	drm_authmagic(struct drm_device *dev, void *data,
-		      struct drm_file *file_priv);
 
 /* Cache management (drm_cache.c) */
 void drm_clflush_virt_range(void *addr, unsigned long length);
@@ -1325,19 +1291,12 @@ void drm_clflush_virt_range(void *addr, unsigned long length);
 /* DMA support (drm_dma.c) */
 int	drm_dma(struct drm_device *dev, void *data, struct drm_file *file_priv);
 
-/* IRQ support (drm_irq.c) */
-int	drm_control(struct drm_device *dev, void *data,
-		    struct drm_file *file_priv);
-
 				/* Stub support (drm_stub.h) */
-extern int drm_setmaster_ioctl(struct drm_device *dev, void *data,
-			       struct drm_file *file_priv);
-extern int drm_dropmaster_ioctl(struct drm_device *dev, void *data,
-				struct drm_file *file_priv);
 
 extern void drm_put_dev(struct drm_device *dev);
 extern void drm_unplug_dev(struct drm_device *dev);
 extern unsigned int drm_debug;
+extern bool drm_atomic;
 
 /* Scatter Gather Support (drm_scatter.c) */
 int	drm_sg_alloc_ioctl(struct drm_device *dev, void *data,
@@ -1351,23 +1310,7 @@ extern drm_dma_handle_t *drm_pci_alloc(struct drm_device *dev, size_t size,
 void	drm_pci_free(struct drm_device *dev, drm_dma_handle_t *dmah);
 
 			       /* sysfs support (drm_sysfs.c) */
-struct drm_sysfs_class;
-extern struct class *drm_sysfs_create(struct module *owner, char *name);
-extern void drm_sysfs_destroy(void);
-extern int drm_sysfs_device_add(struct drm_minor *minor);
 extern void drm_sysfs_hotplug_event(struct drm_device *dev);
-extern void drm_sysfs_device_remove(struct drm_minor *minor);
-extern int drm_sysfs_connector_add(struct drm_connector *connector);
-extern void drm_sysfs_connector_remove(struct drm_connector *connector);
-
-int drm_gem_close_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_gem_open_ioctl(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv);
-void drm_gem_open(struct drm_device *dev, struct drm_file *file_priv);
-void drm_gem_release(struct drm_device *dev, struct drm_file *file_priv);
 
 int drm_gem_mmap_single(struct drm_device *dev, vm_ooffset_t *offset,
     vm_size_t size, struct vm_object **obj_res, int nprot);

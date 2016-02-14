@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -144,6 +144,11 @@ AdCreateTableHeader (
     char                    *NewFilename;
     UINT8                   Checksum;
 
+
+    /* Reset globals for External statements */
+
+    AcpiGbl_NumExternalMethods = 0;
+    AcpiGbl_ResolvedExternalMethods = 0;
 
     /*
      * Print file header and dump original table header

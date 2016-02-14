@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.39 2015/03/23 00:35:19 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.42 2015/05/30 02:49:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -195,6 +195,7 @@ __FBSDID("$FreeBSD$");
 #include "if_iwm_power.h"
 #include "if_iwm_scan.h"
 #include "if_iwm_pcie_trans.h"
+#include "if_iwm_led.h"
 
 const uint8_t iwm_nvm_channels[] = {
 	/* 2.4 GHz */
@@ -467,7 +468,6 @@ iwm_firmware_store_section(struct iwm_softc *sc,
 	return 0;
 }
 
-/* iwlwifi: iwl-drv.c */
 struct iwm_tlv_calib_data {
 	uint32_t ucode_type;
 	struct iwm_tlv_calib_ctrl calib;
@@ -497,9 +497,8 @@ iwm_set_default_calib(struct iwm_softc *sc, const void *data)
 static void
 iwm_fw_info_free(struct iwm_fw_info *fw)
 {
-	firmware_put(fw->fw_rawdata, FIRMWARE_UNLOAD);
-	fw->fw_rawdata = NULL;
-	fw->fw_rawsize = 0;
+	firmware_put(fw->fw_fp, FIRMWARE_UNLOAD);
+	fw->fw_fp = NULL;
 	/* don't touch fw->fw_status */
 	memset(fw->fw_sects, 0, sizeof(fw->fw_sects));
 }
@@ -529,12 +528,12 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	}
 	fw->fw_status = IWM_FW_STATUS_INPROGRESS;
 
-	if (fw->fw_rawdata != NULL)
+	if (fw->fw_fp != NULL)
 		iwm_fw_info_free(fw);
 
 	/*
 	 * Load firmware into driver memory.
-	 * fw_rawdata and fw_rawsize will be set.
+	 * fw_fp will be set.
 	 */
 	IWM_UNLOCK(sc);
 	fwp = firmware_get(sc->sc_fwname);
@@ -546,15 +545,14 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 		goto out;
 	}
 	IWM_LOCK(sc);
-	fw->fw_rawdata = fwp->data;
-	fw->fw_rawsize = fwp->datasize;
+	fw->fw_fp = fwp;
 
 	/*
 	 * Parse firmware contents
 	 */
 
-	uhdr = (const void *)fw->fw_rawdata;
-	if (*(const uint32_t *)fw->fw_rawdata != 0
+	uhdr = fw->fw_fp->data;
+	if (*(const uint32_t *)fw->fw_fp->data != 0
 	    || le32toh(uhdr->magic) != IWM_TLV_UCODE_MAGIC) {
 		device_printf(sc->sc_dev, "invalid firmware %s\n",
 		    sc->sc_fwname);
@@ -564,7 +562,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 
 	sc->sc_fwver = le32toh(uhdr->ver);
 	data = uhdr->data;
-	len = fw->fw_rawsize - sizeof(*uhdr);
+	len = fw->fw_fp->datasize - sizeof(*uhdr);
 
 	while (len >= sizeof(tlv)) {
 		size_t tlv_len;
@@ -763,7 +761,7 @@ iwm_read_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
  out:
 	if (error) {
 		fw->fw_status = IWM_FW_STATUS_NONE;
-		if (fw->fw_rawdata != NULL)
+		if (fw->fw_fp != NULL)
 			iwm_fw_info_free(fw);
 	} else
 		fw->fw_status = IWM_FW_STATUS_DONE;
@@ -1066,7 +1064,7 @@ iwm_alloc_tx_ring(struct iwm_softc *sc, struct iwm_tx_ring *ring, int qid)
 				   BUS_SPACE_MAXADDR_32BIT,
 				   BUS_SPACE_MAXADDR,
 				   NULL, NULL,
-				   MCLBYTES, IWM_MAX_SCATTER - 1, MCLBYTES,
+				   MCLBYTES, IWM_MAX_SCATTER - 2, MCLBYTES,
 				   BUS_DMA_NOWAIT, &ring->data_dmat);
 #else
 	error = bus_dma_tag_create(sc->sc_dmat, 1, 0,
@@ -1208,8 +1206,6 @@ iwm_ict_reset(struct iwm_softc *sc)
 	iwm_enable_interrupts(sc);
 }
 
-/* iwlwifi pcie/trans.c */
-
 /*
  * Since this .. hard-resets things, it's time to actually
  * mark the first vap (if any) as having no mac context.
@@ -1298,7 +1294,6 @@ iwm_stop_device(struct iwm_softc *sc)
 	iwm_check_rfkill(sc);
 }
 
-/* iwlwifi: mvm/ops.c */
 static void
 iwm_mvm_nic_config(struct iwm_softc *sc)
 {
@@ -1715,8 +1710,6 @@ iwm_nvm_read_section(struct iwm_softc *sc,
  * BEGIN IWM_NVM_PARSE
  */
 
-/* iwlwifi/iwl-nvm-parse.c */
-
 /* NVM offsets (in words) definitions */
 enum wkp_nvm_offsets {
 	/* NVM HW-Section offset (in words) definitions */
@@ -2097,7 +2090,6 @@ iwm_load_firmware(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	return error;
 }
 
-/* iwlwifi: pcie/trans.c */
 static int
 iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 {
@@ -2145,7 +2137,6 @@ iwm_send_tx_ant_cfg(struct iwm_softc *sc, uint8_t valid_tx_ant)
 	    IWM_CMD_SYNC, sizeof(tx_ant_cmd), &tx_ant_cmd);
 }
 
-/* iwlwifi: mvm/fw.c */
 static int
 iwm_send_phy_cfg_cmd(struct iwm_softc *sc)
 {
@@ -2197,9 +2188,6 @@ iwm_mvm_load_ucode_wait_alive(struct iwm_softc *sc,
  * mvm misc bits
  */
 
-/*
- * follows iwlwifi/fw.c
- */
 static int
 iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 {
@@ -2225,7 +2213,7 @@ iwm_run_init_mvm_ucode(struct iwm_softc *sc, int justnvm)
 			device_printf(sc->sc_dev, "failed to read nvm\n");
 			return error;
 		}
-		IEEE80211_ADDR_COPY(sc->sc_bssid, &sc->sc_nvm.hw_addr);
+		IEEE80211_ADDR_COPY(sc->sc_bssid, sc->sc_nvm.hw_addr);
 
 		sc->sc_scan_cmd_len = sizeof(struct iwm_scan_cmd)
 		    + sc->sc_capa_max_probe_len
@@ -2330,7 +2318,6 @@ fail:
 	return error;
 }
 
-/* iwlwifi: mvm/rx.c */
 #define IWM_RSSI_OFFSET 50
 static int
 iwm_mvm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
@@ -2362,7 +2349,6 @@ iwm_mvm_calc_rssi(struct iwm_softc *sc, struct iwm_rx_phy_info *phy_info)
 	return max_rssi_dbm;
 }
 
-/* iwlwifi: mvm/rx.c */
 /*
  * iwm_mvm_get_signal_strength - use new rx PHY INFO API
  * values are reported by the fw as positive values - need to negate
@@ -2847,7 +2833,6 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	struct iwm_tx_cmd *tx;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
-	struct mbuf *m1;
 	const struct iwm_rate *rinfo;
 	uint32_t flags;
 	u_int hdrlen;
@@ -2964,46 +2949,32 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	m_adj(m, hdrlen);
 #if defined(__DragonFly__)
 	error = bus_dmamap_load_mbuf_segment(ring->data_dmat, data->map, m,
-					    segs, IWM_MAX_SCATTER - 1,
+					    segs, IWM_MAX_SCATTER - 2,
 					    &nsegs, BUS_DMA_NOWAIT);
 #else
 	error = bus_dmamap_load_mbuf_sg(ring->data_dmat, data->map, m,
 	    segs, &nsegs, BUS_DMA_NOWAIT);
 #endif
-	if (error != 0) {
-		if (error != EFBIG) {
-			device_printf(sc->sc_dev, "can't map mbuf (error %d)\n",
-			    error);
-			m_freem(m);
-			return error;
-		}
+	if (error && error != EFBIG) {
+		device_printf(sc->sc_dev, "can't map mbuf (error %d)\n", error);
+		m_freem(m);
+		return error;
+	}
+	if (error) {
 		/* Too many DMA segments, linearize mbuf. */
-		MGETHDR(m1, M_NOWAIT, MT_DATA);
-		if (m1 == NULL) {
+		if (m_defrag(m, M_NOWAIT)) {
 			m_freem(m);
 			return ENOBUFS;
 		}
-		if (m->m_pkthdr.len > MHLEN) {
-			MCLGET(m1, M_NOWAIT);
-			if (!(m1->m_flags & M_EXT)) {
-				m_freem(m);
-				m_freem(m1);
-				return ENOBUFS;
-			}
-		}
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(m1, void *));
-		m1->m_pkthdr.len = m1->m_len = m->m_pkthdr.len;
-		m_freem(m);
-		m = m1;
 #if defined(__DragonFly__)
 		error = bus_dmamap_load_mbuf_segment(ring->data_dmat, data->map, m,
-						    segs, IWM_MAX_SCATTER - 1,
+						    segs, IWM_MAX_SCATTER - 2,
 						    &nsegs, BUS_DMA_NOWAIT);
 #else
 		error = bus_dmamap_load_mbuf_sg(ring->data_dmat, data->map, m,
 		    segs, &nsegs, BUS_DMA_NOWAIT);
 #endif
-		if (error != 0) {
+		if (error) {
 			device_printf(sc->sc_dev, "can't map mbuf (error %d)\n",
 			    error);
 			m_freem(m);
@@ -3142,10 +3113,6 @@ iwm_mvm_flush_tx_path(struct iwm_softc *sc, int tfd_msk, int sync)
 	return ret;
 }
 #endif
-
-/*
- * BEGIN mvm/sta.c
- */
 
 static void
 iwm_mvm_add_sta_cmd_v6_to_v5(struct iwm_mvm_add_sta_cmd_v6 *cmd_v6,
@@ -3297,14 +3264,6 @@ iwm_mvm_add_aux_sta(struct iwm_softc *sc)
 	return ret;
 }
 
-/*
- * END mvm/sta.c
- */
-
-/*
- * BEGIN mvm/quota.c
- */
-
 static int
 iwm_mvm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 {
@@ -3371,10 +3330,6 @@ iwm_mvm_update_quotas(struct iwm_softc *sc, struct iwm_node *in)
 		    "%s: Failed to send quota: %d\n", __func__, ret);
 	return ret;
 }
-
-/*
- * END mvm/quota.c
- */
 
 /*
  * ieee80211 routines
@@ -3614,6 +3569,11 @@ iwm_setrates(struct iwm_softc *sc, struct iwm_node *in)
 		    "only %zu\n", __func__, nrates, nitems(lq->rs_table));
 		return;
 	}
+	if (nrates == 0) {
+		device_printf(sc->sc_dev,
+		    "%s: node supports 0 rates, odd!\n", __func__);
+		return;
+	}
 
 	/*
 	 * XXX .. and most of iwm_node is not initialised explicitly;
@@ -3625,8 +3585,14 @@ iwm_setrates(struct iwm_softc *sc, struct iwm_node *in)
 	memset(&in->in_ridx, -1, sizeof(in->in_ridx));
 	IWM_DPRINTF(sc, IWM_DEBUG_TXRATE,
 	    "%s: nrates=%d\n", __func__, nrates);
-	for (i = 0; i < nrates; i++) {
-		int rate = ni->ni_rates.rs_rates[i] & IEEE80211_RATE_VAL;
+
+	/*
+	 * Loop over nrates and populate in_ridx from the highest
+	 * rate to the lowest rate.  Remember, in_ridx[] has
+	 * IEEE80211_RATE_MAXSIZE entries!
+	 */
+	for (i = 0; i < min(nrates, IEEE80211_RATE_MAXSIZE); i++) {
+		int rate = ni->ni_rates.rs_rates[(nrates - 1) - i] & IEEE80211_RATE_VAL;
 
 		/* Map 802.11 rate to HW rate index. */
 		for (ridx = 0; ridx <= IWM_RIDX_MAX; ridx++)
@@ -3683,7 +3649,7 @@ iwm_setrates(struct iwm_softc *sc, struct iwm_node *in)
 		 * our hardware table containing the
 		 * configuration to use for this rate.
 		 */
-		ridx = in->in_ridx[(nrates-1)-i];
+		ridx = in->in_ridx[i];
 		tab = iwm_rates[ridx].plcp;
 		tab |= nextant << IWM_RATE_MCS_ANT_POS;
 		if (IWM_RIDX_IS_CCK(ridx))
@@ -3739,6 +3705,10 @@ iwm_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 	    ieee80211_state_name[nstate]);
 	IEEE80211_UNLOCK(ic);
 	IWM_LOCK(sc);
+
+	if (vap->iv_state == IEEE80211_S_SCAN && nstate != vap->iv_state)
+		iwm_led_blink_stop(sc);
+
 	/* disable beacon filtering if we're hopping out of RUN */
 	if (vap->iv_state == IEEE80211_S_RUN && nstate != vap->iv_state) {
 		iwm_mvm_disable_beacon_filter(sc);
@@ -3831,6 +3801,7 @@ iwm_newstate(struct ieee80211vap *vap, enum ieee80211_state nstate, int arg)
 			    "%s: IWM_LQ_CMD failed\n", __func__);
 		}
 
+		iwm_mvm_led_enable(sc);
 		break;
 	}
 
@@ -4126,6 +4097,7 @@ iwm_stop_locked(struct ifnet *ifp)
 #else
 	ifp->if_drv_flags &= ~(IFF_DRV_RUNNING | IFF_DRV_OACTIVE);
 #endif
+	iwm_led_blink_stop(sc);
 	sc->sc_tx_timer = 0;
 	iwm_stop_device(sc);
 }
@@ -4993,6 +4965,7 @@ iwm_attach(device_t dev)
 	mtx_init(&sc->sc_mtx, "iwm_mtx", MTX_DEF, 0);
 	callout_init_mtx(&sc->sc_watchdog_to, &sc->sc_mtx, 0);
 #endif
+	callout_init(&sc->sc_led_blink_to);
 	TASK_INIT(&sc->sc_es_task, 0, iwm_endscan_cb, sc);
 	sc->sc_tq = taskqueue_create("iwm_taskq", M_WAITOK,
             taskqueue_thread_enqueue, &sc->sc_tq);
@@ -5130,6 +5103,7 @@ iwm_attach(device_t dev)
 	sc->sc_max_rssi = IWM_MAX_DBM - IWM_MIN_DBM;
 	sc->sc_preinit_hook.ich_func = iwm_preinit;
 	sc->sc_preinit_hook.ich_arg = sc;
+	sc->sc_preinit_hook.ich_desc = "iwm";
 	if (config_intrhook_establish(&sc->sc_preinit_hook) != 0) {
 		device_printf(dev, "config_intrhook_establish failed\n");
 		goto fail;
@@ -5187,7 +5161,7 @@ iwm_preinit(void *arg)
 		goto fail;
 	}
 	device_printf(dev,
-	    "revision: 0x%x, firmware %d.%d (API ver. %d)\n",
+	    "revision 0x%x, firmware %d.%d (API ver. %d)\n",
 	    sc->sc_hw_rev & IWM_CSR_HW_REV_TYPE_MSK,
 	    IWM_UCODE_MAJOR(sc->sc_fwver),
 	    IWM_UCODE_MINOR(sc->sc_fwver),
@@ -5309,13 +5283,23 @@ iwm_scan_start(struct ieee80211com *ic)
 		wlan_serialize_enter();
 		ieee80211_cancel_scan(vap);
 		wlan_serialize_exit();
-	} else
+	} else {
+		iwm_led_blink_start(sc);
 		IWM_UNLOCK(sc);
+	}
 }
 
 static void
 iwm_scan_end(struct ieee80211com *ic)
 {
+	struct ieee80211vap *vap = TAILQ_FIRST(&ic->ic_vaps);
+	struct iwm_softc *sc = ic->ic_ifp->if_softc;
+
+	IWM_LOCK(sc);
+	iwm_led_blink_stop(sc);
+	if (vap->iv_state == IEEE80211_S_RUN)
+		iwm_mvm_led_enable(sc);
+	IWM_UNLOCK(sc);
 }
 
 static void
@@ -5431,13 +5415,14 @@ iwm_detach_local(struct iwm_softc *sc, int do_net80211)
 		sc->sc_ifp = NULL;
 #endif
 	}
+	callout_drain(&sc->sc_led_blink_to);
 
 	/* Free descriptor rings */
 	for (i = 0; i < nitems(sc->txq); i++)
 		iwm_free_tx_ring(sc, &sc->txq[i]);
 
 	/* Free firmware */
-	if (fw->fw_rawdata != NULL)
+	if (fw->fw_fp != NULL)
 		iwm_fw_info_free(fw);
 
 	/* free scheduler */

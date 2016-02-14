@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -35,7 +31,7 @@
  */
 
 #ifndef _NETINET_IN_H_
-#define _NETINET_IN_H_
+#define	_NETINET_IN_H_
 
 #include <sys/types.h>
 
@@ -68,8 +64,8 @@
 #define	IPPROTO_ICMP		1		/* control message protocol */
 #define	IPPROTO_IGMP		2		/* group mgmt protocol */
 #define	IPPROTO_GGP		3		/* gateway^2 (deprecated) */
-#define IPPROTO_IPV4		4		/* IPv4 encapsulation */
-#define IPPROTO_IPIP		IPPROTO_IPV4	/* for compatibility */
+#define	IPPROTO_IPV4		4		/* IPv4 encapsulation */
+#define	IPPROTO_IPIP		IPPROTO_IPV4	/* for compatibility */
 #define	IPPROTO_TCP		6		/* tcp */
 #define	IPPROTO_ST		7		/* Stream protocol II */
 #define	IPPROTO_EGP		8		/* exterior gateway protocol */
@@ -181,7 +177,7 @@
 #define	IPPROTO_DONE		257
 
 /* Used by RSS: the layer3 protocol is unknown */
-#define IPPROTO_UNKNOWN		258
+#define	IPPROTO_UNKNOWN		258
 
 /*
  * Local port number conventions:
@@ -246,7 +242,7 @@
  * 512, but that conflicts with some well-known-services that firewalls may
  * have a fit if we use.
  */
-#define IPPORT_RESERVEDSTART	600
+#define	IPPORT_RESERVEDSTART	600
 
 #define	IPPORT_MAX		65535
 
@@ -256,7 +252,7 @@ typedef	__uint8_t	sa_family_t;
 #endif
 
 #ifndef _STRUCT_IN_ADDR_DECLARED
-#define _STRUCT_IN_ADDR_DECLARED
+#define	_STRUCT_IN_ADDR_DECLARED
 /*
  * Internet address (a structure for historical reasons)
  */
@@ -270,46 +266,46 @@ struct in_addr {
  * On subnets, the decomposition of addresses to host and net parts
  * is done according to subnet mask, not the masks here.
  */
-#define	IN_CLASSA(i)		(((u_int32_t)(i) & 0x80000000) == 0)
+#define	IN_CLASSA(i)		(((uint32_t)(i) & 0x80000000) == 0)
 #define	IN_CLASSA_NET		0xff000000
 #define	IN_CLASSA_NSHIFT	24
 #define	IN_CLASSA_HOST		0x00ffffff
 #define	IN_CLASSA_MAX		128
 
-#define	IN_CLASSB(i)		(((u_int32_t)(i) & 0xc0000000) == 0x80000000)
+#define	IN_CLASSB(i)		(((uint32_t)(i) & 0xc0000000) == 0x80000000)
 #define	IN_CLASSB_NET		0xffff0000
 #define	IN_CLASSB_NSHIFT	16
 #define	IN_CLASSB_HOST		0x0000ffff
 #define	IN_CLASSB_MAX		65536
 
-#define	IN_CLASSC(i)		(((u_int32_t)(i) & 0xe0000000) == 0xc0000000)
+#define	IN_CLASSC(i)		(((uint32_t)(i) & 0xe0000000) == 0xc0000000)
 #define	IN_CLASSC_NET		0xffffff00
 #define	IN_CLASSC_NSHIFT	8
 #define	IN_CLASSC_HOST		0x000000ff
 
-#define	IN_CLASSD(i)		(((u_int32_t)(i) & 0xf0000000) == 0xe0000000)
+#define	IN_CLASSD(i)		(((uint32_t)(i) & 0xf0000000) == 0xe0000000)
 #define	IN_CLASSD_NET		0xf0000000	/* These ones aren't really */
 #define	IN_CLASSD_NSHIFT	28		/* net and host fields, but */
 #define	IN_CLASSD_HOST		0x0fffffff	/* routing needn't know.    */
 #define	IN_MULTICAST(i)		IN_CLASSD(i)
 
-#define	IN_EXPERIMENTAL(i)	(((u_int32_t)(i) & 0xf0000000) == 0xf0000000)
-#define	IN_BADCLASS(i)		(((u_int32_t)(i) & 0xf0000000) == 0xf0000000)
+#define	IN_EXPERIMENTAL(i)	(((uint32_t)(i) & 0xf0000000) == 0xf0000000)
+#define	IN_BADCLASS(i)		(((uint32_t)(i) & 0xf0000000) == 0xf0000000)
 
-#define	INADDR_ANY		(u_int32_t)0x00000000
-#define	INADDR_LOOPBACK		(u_int32_t)0x7f000001
-#define	INADDR_BROADCAST	(u_int32_t)0xffffffff	/* must be masked */
+#define	INADDR_ANY		(uint32_t)0x00000000
+#define	INADDR_LOOPBACK		(uint32_t)0x7f000001
+#define	INADDR_BROADCAST	(uint32_t)0xffffffff	/* must be masked */
 #ifndef _KERNEL
 #define	INADDR_NONE		0xffffffff		/* -1 return */
 #endif
 
-#define	INADDR_UNSPEC_GROUP	(u_int32_t)0xe0000000	/* 224.0.0.0 */
-#define	INADDR_ALLHOSTS_GROUP	(u_int32_t)0xe0000001	/* 224.0.0.1 */
-#define	INADDR_ALLRTRS_GROUP	(u_int32_t)0xe0000002	/* 224.0.0.2 */
-#define	INADDR_CARP_GROUP       (u_int32_t)0xe0000012   /* 224.0.0.18 */
-#define	INADDR_PFSYNC_GROUP	(u_int32_t)0xe00000f0	/* 224.0.0.240 */
-#define	INADDR_ALLMDNS_GROUP	(u_int32_t)0xe00000fb	/* 224.0.0.251 */
-#define	INADDR_MAX_LOCAL_GROUP	(u_int32_t)0xe00000ff	/* 224.0.0.255 */
+#define	INADDR_UNSPEC_GROUP	(uint32_t)0xe0000000	/* 224.0.0.0 */
+#define	INADDR_ALLHOSTS_GROUP	(uint32_t)0xe0000001	/* 224.0.0.1 */
+#define	INADDR_ALLRTRS_GROUP	(uint32_t)0xe0000002	/* 224.0.0.2 */
+#define	INADDR_CARP_GROUP       (uint32_t)0xe0000012   /* 224.0.0.18 */
+#define	INADDR_PFSYNC_GROUP	(uint32_t)0xe00000f0	/* 224.0.0.240 */
+#define	INADDR_ALLMDNS_GROUP	(uint32_t)0xe00000fb	/* 224.0.0.251 */
+#define	INADDR_MAX_LOCAL_GROUP	(uint32_t)0xe00000ff	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
 
@@ -317,9 +313,9 @@ struct in_addr {
  * Socket address, internet style.
  */
 struct sockaddr_in {
-	u_char		sin_len;
+	uint8_t		sin_len;
 	sa_family_t	sin_family;
-	u_short		sin_port;
+	in_port_t	sin_port;
 	struct in_addr	sin_addr;
 	char		sin_zero[8];
 };
@@ -343,18 +339,18 @@ struct sockaddr_in {
 #define	IP_MULTICAST_LOOP	11   /* u_char; set/get IP multicast loopback */
 #define	IP_ADD_MEMBERSHIP	12   /* ip_mreq; add an IP group membership */
 #define	IP_DROP_MEMBERSHIP	13   /* ip_mreq; drop an IP group membership */
-#define IP_MULTICAST_VIF	14   /* set/get IP mcast virt. iface */
-#define IP_RSVP_ON		15   /* enable RSVP in kernel */
-#define IP_RSVP_OFF		16   /* disable RSVP in kernel */
-#define IP_RSVP_VIF_ON		17   /* set RSVP per-vif socket */
-#define IP_RSVP_VIF_OFF		18   /* unset RSVP per-vif socket */
-#define IP_PORTRANGE		19   /* int; range to choose for unspec port */
+#define	IP_MULTICAST_VIF	14   /* set/get IP mcast virt. iface */
+#define	IP_RSVP_ON		15   /* enable RSVP in kernel */
+#define	IP_RSVP_OFF		16   /* disable RSVP in kernel */
+#define	IP_RSVP_VIF_ON		17   /* set RSVP per-vif socket */
+#define	IP_RSVP_VIF_OFF		18   /* unset RSVP per-vif socket */
+#define	IP_PORTRANGE		19   /* int; range to choose for unspec port */
 #define	IP_RECVIF		20   /* bool; receive reception if w/dgram */
 /* for IPSEC */
 #define	IP_IPSEC_POLICY		21   /* int; set/get security policy */
 #define	IP_FAITH		22   /* bool; accept FAITH'ed connections */
 
-#define IP_FW_X			49   /* ipfw2 firewall */
+#define	IP_FW_X			49   /* ipfw2 firewall */
 #define	IP_FW_ADD		50   /* add a firewall rule to chain */
 #define	IP_FW_DEL		51   /* delete a firewall rule from chain */
 #define	IP_FW_FLUSH		52   /* flush firewall rule chain */
@@ -481,12 +477,12 @@ struct ip_mreq {
 #ifdef notyet
 #define	IPCTL_DEFMTU		4	/* default MTU */
 #endif
-#define IPCTL_RTEXPIRE		5	/* cloned route expiration time */
-#define IPCTL_RTMINEXPIRE	6	/* min value for expiration time */
-#define IPCTL_RTMAXCACHE	7	/* trigger level for dynamic expire */
+#define	IPCTL_RTEXPIRE		5	/* cloned route expiration time */
+#define	IPCTL_RTMINEXPIRE	6	/* min value for expiration time */
+#define	IPCTL_RTMAXCACHE	7	/* trigger level for dynamic expire */
 #define	IPCTL_SOURCEROUTE	8	/* may perform source routes */
 #define	IPCTL_DIRECTEDBROADCAST	9	/* may re-broadcast received packets */
-#define IPCTL_INTRQMAXLEN	10	/* max length of netisr queue */
+#define	IPCTL_INTRQMAXLEN	10	/* max length of netisr queue */
 #define	IPCTL_INTRQDROPS	11	/* number of netisr q drops */
 #define	IPCTL_STATS		12	/* ipstat structure */
 #define	IPCTL_ACCEPTSOURCEROUTE	13	/* may accept source routed packets */
@@ -526,22 +522,22 @@ struct ifnet; struct mbuf;	/* forward declarations for Standard C */
 
 struct thread;
 
-int	 in_broadcast (struct in_addr, struct ifnet *);
-int	 in_canforward (struct in_addr);
-int	 in_localaddr (struct in_addr);
-char	*inet_ntoa (struct in_addr); /* in libkern */
+int	 in_broadcast(struct in_addr, struct ifnet *);
+int	 in_canforward(struct in_addr);
+int	 in_localaddr(struct in_addr);
+char	*inet_ntoa(struct in_addr); /* in libkern */
 char	*inet_ntop(int, const void * __restrict, char * __restrict,
 	    socklen_t); /* in libkern */
 
-int	prison_replace_wildcards (struct thread *td, struct sockaddr *ip);
-int	prison_remote_ip (struct thread *td, struct sockaddr *ip);
+int	prison_replace_wildcards(struct thread *td, struct sockaddr *ip);
+int	prison_remote_ip(struct thread *td, struct sockaddr *ip);
 
-#define in_hosteq(s, t)	((s).s_addr == (t).s_addr)
-#define in_nullhost(x)	((x).s_addr == INADDR_ANY)
+#define	in_hosteq(s, t)	((s).s_addr == (t).s_addr)
+#define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
 
-#define satosin(sa)	((struct sockaddr_in *)(sa))
-#define sintosa(sin)	((struct sockaddr *)(sin))
-#define ifatoia(ifa)	((struct in_ifaddr *)(ifa))
+#define	satosin(sa)	((struct sockaddr_in *)(sa))
+#define	sintosa(sin)	((struct sockaddr *)(sin))
+#define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 
 #endif
 

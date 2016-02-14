@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -302,6 +302,7 @@ extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest6[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest7[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest8[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest9[];
+extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHest10[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHestNotify[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHestBank[];
 extern ACPI_DMTABLE_INFO        AcpiDmTableInfoHpet[];

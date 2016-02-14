@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -56,7 +52,6 @@ struct mntopt {
 #define MOPT_TRIM		{ "trim",	0, MNT_TRIM, 0 }
 #define MOPT_RDONLY		{ "rdonly",	0, MNT_RDONLY, 0 }
 #define MOPT_SYNC		{ "sync",	0, MNT_SYNCHRONOUS, 0 }
-#define MOPT_UNION		{ "union",	0, MNT_UNION, 0 }
 #define MOPT_USERQUOTA		{ "userquota",	0, 0, 0 }
 #define MOPT_GROUPQUOTA		{ "groupquota",	0, 0, 0 }
 #define MOPT_NOCLUSTERR		{ "clusterr",	1, MNT_NOCLUSTERR, 0 }
@@ -93,7 +88,6 @@ struct mntopt {
 	MOPT_NOSUID,							\
 	MOPT_NOSYMFOLLOW,						\
 	MOPT_RDONLY,							\
-	MOPT_UNION,							\
 	MOPT_NOCLUSTERR,						\
 	MOPT_NOCLUSTERW,						\
 	MOPT_IGNORE

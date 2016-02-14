@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -338,13 +338,6 @@ RsDoGpioIntDescriptor (
     Descriptor->Gpio.ResSourceOffset = (UINT16)
         ACPI_PTR_DIFF (ResourceSource, Descriptor);
 
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: "
-        "%.2X, VendLen: %.2X, IntLen: %.2X\n",
-        "GpioInt", Descriptor->Gpio.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_GPIO),
-        ResSourceLength, VendorLength, InterruptLength);
-
     /* Process all child initialization nodes */
 
     for (i = 0; InitializerOp; i++)
@@ -435,7 +428,7 @@ RsDoGpioIntDescriptor (
 
         default:
             /*
-             * PINs come through here, repeatedly. Each PIN must be a DWORD.
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
              * NOTE: there is no "length" field for this, so from ACPI spec:
              *  The number of pins in the table can be calculated from:
              *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
@@ -464,7 +457,7 @@ RsDoGpioIntDescriptor (
 
                 /* Create a named field at the start of the list */
 
-                RsCreateDwordField (InitializerOp, ACPI_RESTAG_PIN,
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
                     CurrentByteOffset + Descriptor->Gpio.PinTableOffset);
             }
             break;
@@ -554,13 +547,6 @@ RsDoGpioIoDescriptor (
     Descriptor->Gpio.ResSourceOffset = (UINT16)
         ACPI_PTR_DIFF (ResourceSource, Descriptor);
 
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: "
-        "%.2X, VendLen: %.2X, IntLen: %.2X\n",
-        "GpioIo", Descriptor->Gpio.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_GPIO),
-        ResSourceLength, VendorLength, InterruptLength);
-
     /* Process all child initialization nodes */
 
     for (i = 0; InitializerOp; i++)
@@ -649,7 +635,7 @@ RsDoGpioIoDescriptor (
 
         default:
             /*
-             * PINs come through here, repeatedly. Each PIN must be a DWORD.
+             * PINs come through here, repeatedly. Each PIN must be a WORD.
              * NOTE: there is no "length" field for this, so from ACPI spec:
              *  The number of pins in the table can be calculated from:
              *  PinCount = (Resource Source Name Offset - Pin Table Offset) / 2
@@ -678,7 +664,7 @@ RsDoGpioIoDescriptor (
 
                 /* Create a named field at the start of the list */
 
-                RsCreateDwordField (InitializerOp, ACPI_RESTAG_PIN,
+                RsCreateWordField (InitializerOp, ACPI_RESTAG_PIN,
                     CurrentByteOffset + Descriptor->Gpio.PinTableOffset);
             }
             break;
@@ -752,13 +738,6 @@ RsDoI2cSerialBusDescriptor (
 
     VendorData = ACPI_ADD_PTR (UINT8, Descriptor, sizeof (AML_RESOURCE_I2C_SERIALBUS));
     ResourceSource = ACPI_ADD_PTR (char, VendorData, VendorLength);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: "
-        "%.2X, VendLen: %.2X, TypLen: %.2X\n",
-        "I2cSerialBus", Descriptor->I2cSerialBus.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_I2C_SERIALBUS), ResSourceLength,
-        VendorLength, Descriptor->I2cSerialBus.TypeDataLength);
 
     /* Process all child initialization nodes */
 
@@ -903,13 +882,6 @@ RsDoSpiSerialBusDescriptor (
     VendorData = ACPI_ADD_PTR (UINT8, Descriptor,
         sizeof (AML_RESOURCE_SPI_SERIALBUS));
     ResourceSource = ACPI_ADD_PTR (char, VendorData, VendorLength);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: "
-        "%.2X, VendLen: %.2X, TypLen: %.2X\n",
-        "SpiSerialBus", Descriptor->SpiSerialBus.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_SPI_SERIALBUS), ResSourceLength,
-        VendorLength, Descriptor->SpiSerialBus.TypeDataLength);
 
     /* Process all child initialization nodes */
 
@@ -1081,13 +1053,6 @@ RsDoUartSerialBusDescriptor (
 
     VendorData = ACPI_ADD_PTR (UINT8, Descriptor, sizeof (AML_RESOURCE_UART_SERIALBUS));
     ResourceSource = ACPI_ADD_PTR (char, VendorData, VendorLength);
-
-    DbgPrint (ASL_DEBUG_OUTPUT,
-        "%16s - Actual: %.2X, Base: %.2X, ResLen: "
-        "%.2X, VendLen: %.2X, TypLen: %.2X\n",
-        "UartSerialBus", Descriptor->UartSerialBus.ResourceLength,
-        (UINT16) sizeof (AML_RESOURCE_UART_SERIALBUS), ResSourceLength,
-        VendorLength, Descriptor->UartSerialBus.TypeDataLength);
 
     /* Process all child initialization nodes */
 

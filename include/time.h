@@ -54,7 +54,7 @@
 #endif
 
 /* Frequency of the clock ticks reported by clock().  */
-#define	CLOCKS_PER_SEC	128
+#define	CLOCKS_PER_SEC	((clock_t)128)
 
 #ifndef _CLOCK_T_DECLARED
 #define _CLOCK_T_DECLARED
@@ -75,6 +75,7 @@ typedef	__size_t	size_t;
 /*
  * New in POSIX 1003.1b-1993.
  */
+#include <sys/timespec.h>
 #ifndef _CLOCKID_T_DECLARED
 #define _CLOCKID_T_DECLARED
 typedef	__clockid_t	clockid_t;
@@ -84,9 +85,8 @@ typedef	__clockid_t	clockid_t;
 #define _TIMER_T_DECLARED
 typedef	__timer_t	timer_t;
 #endif
-
-#include <sys/timespec.h>
-
+#elif __ISO_C_VISIBLE >= 2011
+#include <sys/_timespec.h>
 #endif /* __POSIX_VISIBLE >= 199309 */
 
 #if __POSIX_VISIBLE >= 200112
@@ -122,6 +122,11 @@ typedef	__pid_t		pid_t;
 #endif
 #define TIMER_ABSTIME	0x1	/* absolute timer */
 #endif /* !defined(TIMER_ABSTIME) && __POSIX_VISIBLE >= 200112 */
+
+#if __ISO_C_VISIBLE >= 2011
+/* for timespec_get() */
+#define	TIME_UTC	1
+#endif
 
 struct tm {
 	int	tm_sec;		/* seconds after the minute [0-60] */
@@ -204,6 +209,10 @@ time_t timegm(struct tm * const);
 
 #if __POSIX_VISIBLE >= 200809 || defined(_XLOCALE_H_)
 #include <xlocale/_time.h>
+#endif
+
+#if __ISO_C_VISIBLE >= 2011
+int timespec_get(struct timespec *ts, int base);
 #endif
 __END_DECLS
 

@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -52,12 +48,12 @@ data transport services with minimal addressing
 structure.
 Addressing at this level is normally host to host,
 with implicit or explicit routing optionally supported
-by the communicating agents. 
+by the communicating agents.
 .PP
 At the transport
 layer the notions of reliable transfer, data sequencing,
 flow control, and service addressing are normally
-included.  Reliability is usually managed by 
+included.  Reliability is usually managed by
 explicit acknowledgement of data delivered.  Failure
 to acknowledge a transfer results in retransmission of
 the data.  Sequencing may be handled by tagging

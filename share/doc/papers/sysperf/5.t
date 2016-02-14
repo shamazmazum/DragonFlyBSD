@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -30,6 +26,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)5.t	5.1 (Berkeley) 4/17/91
+.\"
+.\" $FreeBSD: head/share/doc/papers/sysperf/5.t 263142 2014-03-14 03:07:51Z eadler $
 .\"
 .ds RH Functional Extensions
 .NH
@@ -80,7 +78,7 @@ for 10 megabyte/second Ethernet\(dg
 \(dg Ethernet is a trademark of Xerox.
 .FE
 has been made more flexible by allowing hosts to
-act as an ``clearing house'' for hosts that do
+act as a ``clearing house'' for hosts that do
 not support ARP.  In addition, system managers have
 more control over the contents of the ARP translation
 cache and may interactively interrogate and modify

@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -41,7 +37,7 @@
 A raw socket is an object which allows users direct access
 to a lower-level protocol.  Raw sockets are intended for knowledgeable
 processes which wish to take advantage of some protocol
-feature not directly accessible through the normal interface, or 
+feature not directly accessible through the normal interface, or
 for the development of new protocols built atop existing lower level
 protocols.  For example, a new version of TCP might be developed at the
 user level by utilizing a raw IP socket for delivery of packets.
@@ -56,7 +52,7 @@ Control blocks
 .PP
 Every raw socket has a protocol control block of the following form:
 .DS
-.ta \w'struct  'u +\w'caddr_t  'u +\w'sockproto rcb_proto;    'u 
+.ta \w'struct  'u +\w'caddr_t  'u +\w'sockproto rcb_proto;    'u
 struct rawcb {
 	struct	rawcb *rcb_next;	/* doubly linked list */
 	struct	rawcb *rcb_prev;
@@ -137,7 +133,7 @@ form which may be ``block compared''.
 .NH 2
 Output processing
 .PP
-On output the raw \fIpr_usrreq\fP routine 
+On output the raw \fIpr_usrreq\fP routine
 passes the packet and a pointer to the raw control block to the
 raw protocol output routine for any processing required before
 it is delivered to the appropriate network interface.  The

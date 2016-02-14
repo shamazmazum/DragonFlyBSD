@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -412,6 +412,7 @@ AcpiDmDescendingOp (
     const ACPI_OPCODE_INFO  *OpInfo;
     UINT32                  Name;
     ACPI_PARSE_OBJECT       *NextOp;
+    ACPI_PARSE_OBJECT       *NextOp2;
     UINT32                  AmlOffset;
 
 
@@ -438,8 +439,7 @@ AcpiDmDescendingOp (
                     AcpiUtDumpBuffer (
                         (Info->StartAml + Info->AmlOffset),
                         (Op->Common.Aml - Info->PreviousAml),
-                        DB_BYTE_DISPLAY,
-                        Info->AmlOffset);
+                        DB_BYTE_DISPLAY, Info->AmlOffset);
                     AcpiOsPrintf ("\n");
                 }
 
@@ -455,6 +455,33 @@ AcpiDmDescendingOp (
         /* Ignore this op -- it was handled elsewhere */
 
         return (AE_CTRL_DEPTH);
+    }
+
+    if (Op->Common.AmlOpcode == AML_IF_OP)
+    {
+        NextOp = AcpiPsGetDepthNext (NULL, Op);
+        if (NextOp)
+        {
+            NextOp->Common.DisasmFlags |= ACPI_PARSEOP_PARAMLIST;
+        }
+
+        /*
+         * A Zero predicate indicates the possibility of one or more
+         * External() opcodes within the If() block.
+         */
+        if (NextOp->Common.AmlOpcode == AML_ZERO_OP)
+        {
+            NextOp2 = NextOp->Common.Next;
+
+            if (NextOp2 &&
+                (NextOp2->Common.AmlOpcode == AML_EXTERNAL_OP))
+            {
+                /* Ignore the If 0 block and all children */
+
+                Op->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
+                return (AE_CTRL_DEPTH);
+            }
+        }
     }
 
     /* Level 0 is at the Definition Block level */
@@ -490,39 +517,40 @@ AcpiDmDescendingOp (
     }
     else if ((AcpiDmBlockType (Op->Common.Parent) & BLOCK_BRACE) &&
          (!(Op->Common.DisasmFlags & ACPI_PARSEOP_PARAMLIST)) &&
+         (!(Op->Common.DisasmFlags & ACPI_PARSEOP_ELSEIF)) &&
          (Op->Common.AmlOpcode != AML_INT_BYTELIST_OP))
     {
+        /*
+         * This is a first-level element of a term list,
+         * indent a new line
+         */
+        switch (Op->Common.AmlOpcode)
+        {
+        case AML_NOOP_OP:
             /*
-             * This is a first-level element of a term list,
-             * indent a new line
+             * Optionally just ignore this opcode. Some tables use
+             * NoOp opcodes for "padding" out packages that the BIOS
+             * changes dynamically. This can leave hundreds or
+             * thousands of NoOp opcodes that if disassembled,
+             * cannot be compiled because they are syntactically
+             * incorrect.
              */
-            switch (Op->Common.AmlOpcode)
+            if (AcpiGbl_IgnoreNoopOperator)
             {
-            case AML_NOOP_OP:
-                /*
-                 * Optionally just ignore this opcode. Some tables use
-                 * NoOp opcodes for "padding" out packages that the BIOS
-                 * changes dynamically. This can leave hundreds or
-                 * thousands of NoOp opcodes that if disassembled,
-                 * cannot be compiled because they are syntactically
-                 * incorrect.
-                 */
-                if (AcpiGbl_IgnoreNoopOperator)
-                {
-                    Op->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
-                    return (AE_OK);
-                }
-
-                /* Fallthrough */
-
-            default:
-
-                AcpiDmIndent (Level);
-                break;
+                Op->Common.DisasmFlags |= ACPI_PARSEOP_IGNORE;
+                return (AE_OK);
             }
 
-            Info->LastLevel = Level;
-            Info->Count = 0;
+            /* Fallthrough */
+
+        default:
+
+            AcpiDmIndent (Level);
+            break;
+        }
+
+        Info->LastLevel = Level;
+        Info->Count = 0;
     }
 
     /*
@@ -789,8 +817,8 @@ AcpiDmDescendingOp (
             NextOp->Common.DisasmFlags |= ACPI_PARSEOP_PARAMLIST;
             return (AE_OK);
 
-        case AML_VAR_PACKAGE_OP:
         case AML_IF_OP:
+        case AML_VAR_PACKAGE_OP:
         case AML_WHILE_OP:
 
             /* The next op is the size or predicate parameter */

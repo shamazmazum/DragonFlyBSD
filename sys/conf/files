@@ -423,8 +423,8 @@ dev/raid/mrsas/mrsas_ioctl.c	optional mrsas
 dev/raid/mrsas/mrsas_fp.c	optional mrsas
 dev/netif/msk/if_msk.c		optional msk
 dev/netif/nfe/if_nfe.c		optional nfe
-dev/raid/hpt27xx/os_bsd.c	optional hpt27xx
-dev/raid/hpt27xx/osm_bsd.c	optional hpt27xx
+dev/raid/hpt27xx/hpt27xx_os_bsd.c optional hpt27xx
+dev/raid/hpt27xx/hpt27xx_osm_bsd.c optional hpt27xx
 dev/raid/hpt27xx/hpt27xx_config.c optional hpt27xx
 dev/raid/hptiop/hptiop.c	optional hptiop scbus
 dev/raid/hptmv/entry.c		optional hptmv
@@ -503,6 +503,7 @@ iwi_monitor.fw			optional iwifw				\
 	clean		"iwi_monitor.fw"
 dev/netif/iwm/if_iwm.c			optional iwm
 dev/netif/iwm/if_iwm_binding.c		optional iwm
+dev/netif/iwm/if_iwm_led.c		optional iwm
 dev/netif/iwm/if_iwm_mac_ctxt.c		optional iwm
 dev/netif/iwm/if_iwm_pcie_trans.c	optional iwm
 dev/netif/iwm/if_iwm_phy_ctxt.c		optional iwm
@@ -1225,9 +1226,6 @@ vfs/procfs/procfs_type.c	optional procfs
 vfs/procfs/procfs_vfsops.c	optional procfs
 vfs/procfs/procfs_vnops.c	optional procfs
 vfs/procfs/procfs_rlimit.c	optional procfs
-vfs/union/union_subr.c		optional union
-vfs/union/union_vfsops.c	optional union
-vfs/union/union_vnops.c		optional union
 vfs/hpfs/hpfs_alsubr.c		optional hpfs
 vfs/hpfs/hpfs_hash.c		optional hpfs
 vfs/hpfs/hpfs_lookup.c		optional hpfs
@@ -1522,6 +1520,7 @@ net/ipfw/ip_fw2_glue.c		optional inet
 net/ipfw3/ip_fw3.c		optional ipfirewall3
 net/ipfw3/ip_fw3_glue.c		optional inet
 net/ipfw3/ip_fw3_table.c	optional ipfirewall3
+net/ipfw3/ip_fw3_log.c		optional ipfirewall3
 netinet/ip_icmp.c		optional inet
 netinet/ip_input.c		optional inet
 netinet/ip_demux.c		optional inet
@@ -1695,7 +1694,6 @@ bus/pci/pci_pci.c		optional pci
 bus/pci/pci_user.c		optional pci
 bus/pci/pcib_if.m		optional pci
 bus/pci/vga_pci.c		optional pci
-bus/pci/pci_compat.c		optional pci compat_oldpci
 kern/kern_posix4_mib.c		standard
 kern/kern_p1003_1b.c		standard
 kern/kern_sched.c		optional _kposix_priority_scheduling
@@ -1978,6 +1976,8 @@ dev/crypto/hifn/hifn7751.c		optional hifn
 dev/crypto/ubsec/ubsec.c		optional ubsec
 dev/drm/ati_pcigart.c			optional drm
 dev/drm/drm_agpsupport.c		optional drm
+dev/drm/drm_atomic.c			optional drm
+dev/drm/drm_atomic_helper.c		optional drm
 dev/drm/drm_auth.c			optional drm
 dev/drm/drm_bufs.c			optional drm
 dev/drm/drm_cache.c			optional drm
@@ -2000,9 +2000,11 @@ dev/drm/drm_ioctl.c			optional drm
 dev/drm/drm_irq.c			optional drm
 dev/drm/drm_lock.c			optional drm
 dev/drm/drm_memory.c			optional drm
+dev/drm/drm_mipi_dsi.c			optional drm
 dev/drm/drm_mm.c			optional drm
 dev/drm/drm_modes.c			optional drm
 dev/drm/drm_modeset_lock.c		optional drm
+dev/drm/drm_panel.c			optional drm
 dev/drm/drm_pci.c			optional drm
 dev/drm/drm_plane_helper.c		optional drm
 dev/drm/drm_probe_helper.c		optional drm
@@ -2038,19 +2040,25 @@ dev/drm/i915/i915_cmd_parser.c		optional i915 drm
 dev/drm/i915/i915_dma.c			optional i915 drm
 dev/drm/i915/i915_drv.c			optional i915 drm
 dev/drm/i915/i915_gem.c			optional i915 drm
+dev/drm/i915/i915_gem_batch_pool.c	optional i915 drm
 dev/drm/i915/i915_gem_context.c		optional i915 drm
 dev/drm/i915/i915_gem_execbuffer.c	optional i915 drm
 dev/drm/i915/i915_gem_evict.c		optional i915 drm
 dev/drm/i915/i915_gem_gtt.c		optional i915 drm
 dev/drm/i915/i915_gem_stolen.c		optional i915 drm
 dev/drm/i915/i915_gem_render_state.c	optional i915 drm
+dev/drm/i915/i915_gem_shrinker.c	optional i915 drm
 dev/drm/i915/i915_gem_tiling.c		optional i915 drm
 dev/drm/i915/i915_gem_userptr.c		optional i915 drm
 dev/drm/i915/i915_irq.c			optional i915 drm
 dev/drm/i915/i915_params.c		optional i915 drm
 dev/drm/i915/i915_suspend.c		optional i915 drm
-dev/drm/i915/i915_ums.c			optional i915 drm
+dev/drm/i915/i915_sysfs.c		optional i915 drm
+dev/drm/i915/i915_vgpu.c		optional i915 drm
 dev/drm/i915/intel_acpi.c		optional i915 drm
+dev/drm/i915/intel_atomic.c		optional i915 drm
+dev/drm/i915/intel_atomic_plane.c	optional i915 drm
+dev/drm/i915/intel_audio.c		optional i915 drm
 dev/drm/i915/intel_bios.c		optional i915 drm
 dev/drm/i915/intel_crt.c		optional i915 drm
 dev/drm/i915/intel_ddi.c		optional i915 drm
@@ -2058,11 +2066,13 @@ dev/drm/i915/intel_display.c		optional i915 drm
 dev/drm/i915/intel_dp.c			optional i915 drm
 dev/drm/i915/intel_dp_mst.c		optional i915 drm
 dev/drm/i915/intel_dsi.c		optional i915 drm
-dev/drm/i915/intel_dsi_cmd.c		optional i915 drm
 dev/drm/i915/intel_dsi_panel_vbt.c	optional i915 drm
 dev/drm/i915/intel_dsi_pll.c		optional i915 drm
 dev/drm/i915/intel_dvo.c		optional i915 drm
 dev/drm/i915/intel_fbdev.c		optional i915 drm
+dev/drm/i915/intel_fbc.c		optional i915 drm
+dev/drm/i915/intel_fifo_underrun.c	optional i915 drm
+dev/drm/i915/intel_frontbuffer.c	optional i915 drm
 dev/drm/i915/intel_hdmi.c		optional i915 drm
 dev/drm/i915/intel_i2c.c		optional i915 drm
 dev/drm/i915/intel_lrc.c		optional i915 drm
@@ -2072,10 +2082,13 @@ dev/drm/i915/intel_opregion.c		optional i915 drm
 dev/drm/i915/intel_overlay.c		optional i915 drm
 dev/drm/i915/intel_panel.c		optional i915 drm
 dev/drm/i915/intel_pm.c			optional i915 drm
+dev/drm/i915/intel_psr.c		optional i915 drm
 dev/drm/i915/intel_renderstate_gen6.c	optional i915 drm
 dev/drm/i915/intel_renderstate_gen7.c	optional i915 drm
 dev/drm/i915/intel_renderstate_gen8.c	optional i915 drm
+dev/drm/i915/intel_renderstate_gen9.c	optional i915 drm
 dev/drm/i915/intel_ringbuffer.c		optional i915 drm
+dev/drm/i915/intel_runtime_pm.c		optional i915 drm
 dev/drm/i915/intel_sdvo.c		optional i915 drm
 dev/drm/i915/intel_sideband.c		optional i915 drm
 dev/drm/i915/intel_sprite.c		optional i915 drm
@@ -2150,6 +2163,7 @@ dev/drm/radeon/radeon_sa.c		optional radeon drm
 dev/drm/radeon/radeon_semaphore.c	optional radeon drm
 dev/drm/radeon/radeon_test.c		optional radeon drm
 dev/drm/radeon/radeon_ttm.c		optional radeon drm
+dev/drm/radeon/radeon_ucode.c		optional radeon drm
 dev/drm/radeon/radeon_uvd.c		optional radeon drm
 dev/drm/radeon/radeon_vce.c		optional radeon drm
 dev/drm/radeon/radeon_vm.c		optional radeon drm

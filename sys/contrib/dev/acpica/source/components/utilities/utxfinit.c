@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -161,6 +161,32 @@ AcpiEnableSubsystem (
     ACPI_FUNCTION_TRACE (AcpiEnableSubsystem);
 
 
+    /*
+     * The early initialization phase is complete. The namespace is loaded,
+     * and we can now support address spaces other than Memory, I/O, and
+     * PCI_Config.
+     */
+    AcpiGbl_EarlyInitialization = FALSE;
+
+    /*
+     * Install the default operation region handlers. These are the
+     * handlers that are defined by the ACPI specification to be
+     * "always accessible" -- namely, SystemMemory, SystemIO, and
+     * PCI_Config. This also means that no _REG methods need to be
+     * run for these address spaces. We need to have these handlers
+     * installed before any AML code can be executed, especially any
+     * module-level code (11/2015).
+     */
+    if (!AcpiGbl_GroupModuleLevelCode)
+    {
+        Status = AcpiEvInstallRegionHandlers ();
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_EXCEPTION ((AE_INFO, Status, "During Region initialization"));
+            return_ACPI_STATUS (Status);
+        }
+    }
+
 #if (!ACPI_REDUCED_HARDWARE)
 
     /* Enable ACPI mode */
@@ -193,26 +219,6 @@ AcpiEnableSubsystem (
         }
     }
 
-#endif /* !ACPI_REDUCED_HARDWARE */
-
-    /*
-     * Install the default OpRegion handlers. These are installed unless
-     * other handlers have already been installed via the
-     * InstallAddressSpaceHandler interface.
-     */
-    if (!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "[Init] Installing default address space handlers\n"));
-
-        Status = AcpiEvInstallRegionHandlers ();
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-    }
-
-#if (!ACPI_REDUCED_HARDWARE)
     /*
      * Initialize ACPI Event handling (Fixed and General Purpose)
      *
@@ -286,25 +292,6 @@ AcpiInitializeObjects (
     ACPI_FUNCTION_TRACE (AcpiInitializeObjects);
 
 
-    /*
-     * Run all _REG methods
-     *
-     * Note: Any objects accessed by the _REG methods will be automatically
-     * initialized, even if they contain executable AML (see the call to
-     * AcpiNsInitializeObjects below).
-     */
-    if (!(Flags & ACPI_NO_ADDRESS_SPACE_INIT))
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "[Init] Executing _REG OpRegion methods\n"));
-
-        Status = AcpiEvInitializeOpRegions ();
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-    }
-
 #ifdef ACPI_EXEC_APP
     /*
      * This call implements the "initialization file" option for AcpiExec.
@@ -320,8 +307,15 @@ AcpiInitializeObjects (
      * outside of any control method is wrapped with a temporary control
      * method object and placed on a global list. The methods on this list
      * are executed below.
+     *
+     * This case executes the module-level code for all tables only after
+     * all of the tables have been loaded. It is a legacy option and is
+     * not compatible with other ACPI implementations. See AcpiNsLoadTable.
      */
-    AcpiNsExecModuleCodeList ();
+    if (AcpiGbl_GroupModuleLevelCode)
+    {
+        AcpiNsExecModuleCodeList ();
+    }
 
     /*
      * Initialize the objects that remain uninitialized. This runs the
@@ -340,16 +334,15 @@ AcpiInitializeObjects (
         }
     }
 
-    /*
-     * Initialize all device objects in the namespace. This runs the device
-     * _STA and _INI methods.
-     */
-    if (!(Flags & ACPI_NO_DEVICE_INIT))
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC,
-            "[Init] Initializing ACPI Devices\n"));
+    AcpiGbl_NamespaceInitialized = TRUE;
 
-        Status = AcpiNsInitializeDevices ();
+    /*
+     * Initialize all device/region objects in the namespace. This runs
+     * the device _STA and _INI methods and region _REG methods.
+     */
+    if (!(Flags & (ACPI_NO_DEVICE_INIT | ACPI_NO_ADDRESS_SPACE_INIT)))
+    {
+        Status = AcpiNsInitializeDevices (Flags);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);

@@ -1,6 +1,4 @@
-# $FreeBSD: src/share/doc/usd/12.vi/Makefile.inc,v 1.2 1999/08/28 00:18:53 peter Exp $
-# $DragonFly: src/share/doc/usd/12.vi/Makefile.inc,v 1.2 2003/06/17 04:36:57 dillon Exp $
+# $FreeBSD: head/share/doc/usd/12.vi/Makefile.inc 281994 2015-04-26 07:52:43Z bapt $
 
 VOLUME=		usd/12.vi
 MACROS=		-ms
-USE_TBL=	yes

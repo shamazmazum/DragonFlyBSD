@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -45,7 +41,7 @@ DEC has become, with the introduction of the UDA50/RA81 system,
 cost competitive
 in the area of disk storage for the first time.
 Emulex's entry into the VAX 11/780 SBI controller
-field, the SC780, represented a important choice for us to examine, given
+field, the SC780, represented an important choice for us to examine, given
 our previous success with their VAX 11/750 SC750 controller and
 their UNIBUS controllers.
 The Fujitsu 2351A

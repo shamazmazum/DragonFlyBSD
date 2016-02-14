@@ -1,4 +1,4 @@
-LIB=	ssh
+LIB=	private_ssh
 SHLIB_MAJOR= 4
 SRCS=	ssherr.c \
 	sshbuf.c \
@@ -28,6 +28,10 @@ SRCS+=	bcrypt_pbkdf.c blowfish.c bsd-misc.c explicit_bzero.c \
 MAN=	moduli.5
 
 WARNS?=	2
+
+SHLIBDIR?=	/usr/lib/priv
+LIBDIR?=	${SHLIBDIR}
+PROFLIBDIR?=	${SHLIBDIR}/profile
 
 .include "../../Makefile.ssh.common"
 .include <bsd.lib.mk>

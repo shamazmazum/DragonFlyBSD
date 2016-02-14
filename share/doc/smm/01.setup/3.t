@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -29,6 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
+.\" $FreeBSD: head/share/doc/smm/01.setup/3.t 263142 2014-03-14 03:07:51Z eadler $
 .\"	@(#)3.t	8.1 (Berkeley) 7/27/93
 .\"
 .ds lq ``
@@ -379,7 +376,7 @@ the kernel will use
 .Pn \*(Dk1a
 as its root filesystem. If
 .Pn /dev/\*(Dk1b
-is configured as a swap partition, 
+is configured as a swap partition,
 it will be used as the initial swap area,
 otherwise the normal primary swap area (\c
 .Pn /dev/\*(Dk0b )
@@ -488,7 +485,7 @@ tape, extract them into a scratch directory, say
 .PP
 The data files marked in the previous table with a dagger (\(dg)
 may be used without change from the previous system.
-Those data files marked with a double dagger (\(dd) have syntax 
+Those data files marked with a double dagger (\(dd) have syntax
 changes or substantial enhancements.
 You should start with the \*(4B version and carefully
 integrate any local changes into the new file.
@@ -604,8 +601,8 @@ _	_	_
 /etc/passwd	/etc/master.passwd	new format; see below
 /usr/lib/sendmail.cf	/etc/sendmail.cf	changed pathnames
 /usr/lib/aliases	/etc/aliases	may contain changed pathnames
-/etc/*.pid	/var/run/*.pid	
-	
+/etc/*.pid	/var/run/*.pid
+
 .T&
 l l l
 lfC lfC l.
@@ -631,7 +628,6 @@ _	_	_
 	/etc/disklabels	directory for saving disklabels
 	/etc/exports	NFS list of export permissions
 	/etc/ftpwelcome	message displayed for ftp users; see ftpd(8)
-	/etc/kerberosIV	Kerberos directory; see below
 	/etc/man.conf	lists directories searched by \fIman\fP\|(1)
 	/etc/mtree	directory for local mtree files; see mtree(8)
 	/etc/netgroup	NFS group list used in \f(CW/etc/exports\fP
@@ -711,7 +707,7 @@ After copying your version of
 you should do:
 .DS
 \fB#\fP \fIchown \-R root /var/spool/at\fP
-\fB#\fP \fIchown \-R uucp.daemon /var/spool/uucp\fP
+\fB#\fP \fIchown \-R uucp:daemon /var/spool/uucp\fP
 \fB#\fP \fIchmod \-R o\-w /var/spool/uucp\fP
 .DE
 .PP
@@ -858,7 +854,7 @@ The ``daemon'' user is used for daemon processes that
 do not need root privileges.
 The ``operator'' user-id is used as an account for dumpers
 so that they can log in without having the root password.
-By placing them in the ``operator'' group, 
+By placing them in the ``operator'' group,
 they can get read access to the disks.
 The ``uucp'' login has existed long before \*(4B,
 and is noted here just to provide a common user-id.
@@ -1001,7 +997,7 @@ privilege to set kernel state.
 .Sh 3 "Security"
 .PP
 The kernel runs with four different levels of security.
-Any superuser process can raise the security level, but only 
+Any superuser process can raise the security level, but only
 .Fn init (8)
 can lower it.
 Security levels are defined as follows:
@@ -1026,7 +1022,7 @@ but also inhibits running
 while the system is multi-user.
 See
 .Xr chflags (1)
-and the \-\fBo\fP option to 
+and the \-\fBo\fP option to
 .Xr ls (1)
 for information on setting and displaying the immutable and append-only
 flags.
@@ -1164,14 +1160,14 @@ structure into the kernel (e.g.
 .Fn sendto
 and
 .Fn connect )
-have a separate parameter that specifies the 
+have a separate parameter that specifies the
 .I sockaddr
 length, and thus it is not necessary to fill in the
 .I sa_len
 field for those system calls.
 System calls that pass a
 .I sockaddr
-structure back from the kernel (e.g. 
+structure back from the kernel (e.g.
 .Fn recvfrom
 and
 .Fn accept )
@@ -1318,7 +1314,7 @@ See
 and
 .Xr lfs_cleanerd (8)
 for more information.
-For a in-depth description of the implementation and performance
+For an in-depth description of the implementation and performance
 characteristics of log-structured filesystems in general,
 and this one in particular, see Dr. Margo Seltzer's doctoral thesis,
 available from the University of California Computer Science Department.
@@ -1327,7 +1323,7 @@ We have also added a memory-based filesystem that runs in
 pageable memory, allowing large temporary filesystems without
 requiring dedicated physical memory.
 .PP
-The local ``fast filesystem'' has been enhanced to do 
+The local ``fast filesystem'' has been enhanced to do
 clustering that allows large pieces of files to be
 allocated contiguously resulting in near doubling
 of filesystem throughput.
@@ -1354,7 +1350,7 @@ When set on a file,
 .Xr dump (8)
 will omit the file from incremental backups
 but retain them on full backups.
-See the ``-h'' flag to 
+See the ``-h'' flag to
 .Xr dump (8)
 for details on how to change this default.
 The ``nodump'' flag is usually set on core dumps,
@@ -1590,49 +1586,44 @@ architectures from the same source tree
 (that may be mounted read-only).
 .Sh 4 "Kerberos"
 .PP
-The Kerberos authentication server from MIT (version 4)
+The Kerberos authentication system designed by MIT (version 5)
 is included in this release.
 See
-.Xr kerberos (1)
-for a general, if MIT-specific, introduction.
+.Xr kerberos (8)
+for a general introduction.
+Pluggable Authentication Modules (PAM) can use Kerberos
+at the system administrator's discretion.
 If it is configured,
+apps such as
 .Xr login (1),
 .Xr passwd (1),
-.Xr rlogin (1)
+.Xr ftp (1)
 and
-.Xr rsh (1)
-will all begin to use it automatically.
+.Xr ssh (1)
+can use it automatically.
 The file
-.Pn /etc/kerberosIV/README
-describes the configuration.
 Each system needs the file
-.Pn /etc/kerberosIV/krb.conf
+.Pn /etc/krb5.conf
 to set its realm and local servers,
 and a private key stored in
-.Pn /etc/kerberosIV/srvtab
+.Pn /etc/krb5.keytab
 (see
-.Xr ext_srvtab (8)).
-The Kerberos server should be set up on a single, physically secure,
+.Xr ktutil (8)).
+The Kerberos server should be set up on a single,
+physically secure,
 server machine.
-Users and hosts may be added to the server database manually with
-.Xr kdb_edit (8),
-or users on authorized hosts can add themselves and a Kerberos
-password after verification of their ``local'' (passwd-file) password
-using the
-.Xr register (1)
-program.
+Users and hosts may be added and modified with
+.Xr kadmin (8).
 .PP
-Note that by default the password-changing program
+Note that the password-changing program
 .Xr passwd (1)
-changes the Kerberos password, that must exist.
+can change the Kerberos password,
+if configured by the administrator using PAM.
 The
 .Li \-l
 option to
 .Xr passwd (1)
 changes the ``local'' password if one exists.
-.PP
-Note that Version 5 of Kerberos will be released soon;
-Version 4 should probably be replaced at that time.
 .Sh 4 "Timezone support"
 .PP
 The timezone conversion code in the C library uses data files installed in
@@ -1866,7 +1857,7 @@ yacc	A new, freely redistributable, significantly faster version.
 .PP
 The new versions of
 .Xr lex (1)
-(``flex'') and 
+(``flex'') and
 .Xr yacc (1)
 (``zoo'') should be installed early on if attempting to
 cross-compile \*(4B on another system.
@@ -1888,7 +1879,7 @@ for an example of their use.
 .Sh 2 "Hints on converting from \*(Ps to \*(4B"
 .PP
 This section summarizes changes between
-\*(Ps and \*(4B that are likely to 
+\*(Ps and \*(4B that are likely to
 cause difficulty in doing the conversion.
 It does not include changes in the network;
 see section 5 for information on setting up the network.

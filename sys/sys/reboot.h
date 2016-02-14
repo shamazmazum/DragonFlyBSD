@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -68,44 +64,5 @@
 
 #define RB_VIDEO	0x20000000	/* use video console */
 #define	RB_BOOTINFO	0x80000000	/* have `struct bootinfo *' arg */
-
-/*
- * Constants for converting boot-style device number to type,
- * adaptor (uba, mba, etc), unit number and partition number.
- * Type (== major device number) is in the low byte
- * for backward compatibility.  Except for that of the "magic
- * number", each mask applies to the shifted value.
- * Format:
- *	 (4) (4) (4) (4)  (8)     (8)
- *	--------------------------------
- *	|MA | AD| CT| UN| PART  | TYPE |
- *	--------------------------------
- */
-#define	B_ADAPTORSHIFT		24
-#define	B_ADAPTORMASK		0x0f
-#define	B_ADAPTOR(val)		(((val) >> B_ADAPTORSHIFT) & B_ADAPTORMASK)
-#define B_CONTROLLERSHIFT	20
-#define B_CONTROLLERMASK	0xf
-#define	B_CONTROLLER(val)	(((val)>>B_CONTROLLERSHIFT) & B_CONTROLLERMASK)
-#define B_SLICESHIFT		20
-#define B_SLICEMASK		0xff
-#define B_SLICE(val)		(((val)>>B_SLICESHIFT) & B_SLICEMASK)
-#define B_UNITSHIFT		16
-#define B_UNITMASK		0xf
-#define	B_UNIT(val)		(((val) >> B_UNITSHIFT) & B_UNITMASK)
-#define B_PARTITIONSHIFT	8
-#define B_PARTITIONMASK		0xff
-#define	B_PARTITION(val)	(((val) >> B_PARTITIONSHIFT) & B_PARTITIONMASK)
-#define	B_TYPESHIFT		0
-#define	B_TYPEMASK		0xff
-#define	B_TYPE(val)		(((val) >> B_TYPESHIFT) & B_TYPEMASK)
-
-#define	B_MAGICMASK	0xf0000000
-#define	B_DEVMAGIC	0xa0000000
-
-#define MAKEBOOTDEV(type, adaptor, controller, unit, partition) \
-	(((type) << B_TYPESHIFT) | ((adaptor) << B_ADAPTORSHIFT) | \
-	((controller) << B_CONTROLLERSHIFT) | ((unit) << B_UNITSHIFT) | \
-	((partition) << B_PARTITIONSHIFT) | B_DEVMAGIC)
 
 #endif

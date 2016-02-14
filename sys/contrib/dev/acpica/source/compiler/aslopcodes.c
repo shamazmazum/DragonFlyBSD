@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1510,14 +1510,7 @@ OpcGenerateAmlOpcode (
 
     case PARSEOP_INCLUDE:
 
-        Op->Asl.Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         Gbl_HasIncludeFiles = TRUE;
-        break;
-
-    case PARSEOP_EXTERNAL:
-
-        Op->Asl.Child->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
-        Op->Asl.Child->Asl.Next->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         break;
 
     case PARSEOP_TIMER:

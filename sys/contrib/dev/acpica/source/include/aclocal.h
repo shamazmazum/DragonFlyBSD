@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,7 +89,7 @@ union acpi_parse_object;
 #define ACPI_MTX_MEMORY                 5   /* Debug memory tracking lists */
 
 #define ACPI_MAX_MUTEX                  5
-#define ACPI_NUM_MUTEX                  ACPI_MAX_MUTEX+1
+#define ACPI_NUM_MUTEX                  (ACPI_MAX_MUTEX+1)
 
 
 /* Lock structure for reader/writer interfaces */
@@ -111,12 +111,12 @@ typedef struct acpi_rw_lock
 #define ACPI_LOCK_HARDWARE              1
 
 #define ACPI_MAX_LOCK                   1
-#define ACPI_NUM_LOCK                   ACPI_MAX_LOCK+1
+#define ACPI_NUM_LOCK                   (ACPI_MAX_LOCK+1)
 
 
 /* This Thread ID means that the mutex is not in use (unlocked) */
 
-#define ACPI_MUTEX_NOT_ACQUIRED         (ACPI_THREAD_ID) -1
+#define ACPI_MUTEX_NOT_ACQUIRED         ((ACPI_THREAD_ID) -1)
 
 /* This Thread ID means an invalid thread ID */
 
@@ -453,6 +453,7 @@ typedef union acpi_predefined_info
 /* Return object auto-repair info */
 
 typedef ACPI_STATUS (*ACPI_OBJECT_CONVERTER) (
+    struct acpi_namespace_node  *Scope,
     union acpi_operand_object   *OriginalObject,
     union acpi_operand_object   **ConvertedObject);
 
@@ -488,6 +489,7 @@ typedef struct acpi_simple_repair_info
 typedef struct acpi_reg_walk_info
 {
     ACPI_ADR_SPACE_TYPE     SpaceId;
+    UINT32                  Function;
     UINT32                  RegRunCount;
 
 } ACPI_REG_WALK_INFO;
@@ -1040,6 +1042,7 @@ typedef struct acpi_parse_state
 #define ACPI_PARSEOP_CLOSING_PAREN      0x10
 #define ACPI_PARSEOP_COMPOUND           0x20
 #define ACPI_PARSEOP_ASSIGNMENT         0x40
+#define ACPI_PARSEOP_ELSEIF             0x80
 
 
 /*****************************************************************************

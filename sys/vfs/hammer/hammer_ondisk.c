@@ -741,8 +741,7 @@ found_aliased:
 	buffer->zoneX_offset = buf_offset;
 
 	hammer_io_init(&buffer->io, volume, iotype);
-	buffer->io.offset = volume->ondisk->vol_buf_beg +
-			    (zone2_offset & HAMMER_OFF_SHORT_MASK);
+	buffer->io.offset = hammer_xlate_to_phys(volume->ondisk, zone2_offset);
 	buffer->io.bytes = bytes;
 	TAILQ_INIT(&buffer->clist);
 	hammer_ref_interlock_true(&buffer->io.lock);
@@ -1142,7 +1141,7 @@ hammer_rel_buffer(hammer_buffer_t buffer, int locked)
 static __inline
 void *
 _hammer_bread(hammer_mount_t hmp, hammer_off_t buf_offset, int bytes,
-	     int *errorp, struct hammer_buffer **bufferp)
+	     int isnew, int *errorp, struct hammer_buffer **bufferp)
 {
 	hammer_buffer_t buffer;
 	int32_t xoff = (int32_t)buf_offset & HAMMER_BUFMASK;
@@ -1155,7 +1154,7 @@ _hammer_bread(hammer_mount_t hmp, hammer_off_t buf_offset, int bytes,
 			       buffer->zoneX_offset != buf_offset)) {
 		if (buffer)
 			hammer_rel_buffer(buffer, 0);
-		buffer = hammer_get_buffer(hmp, buf_offset, bytes, 0, errorp);
+		buffer = hammer_get_buffer(hmp, buf_offset, bytes, isnew, errorp);
 		*bufferp = buffer;
 	} else {
 		*errorp = 0;
@@ -1174,7 +1173,7 @@ void *
 hammer_bread(hammer_mount_t hmp, hammer_off_t buf_offset,
 	     int *errorp, struct hammer_buffer **bufferp)
 {
-	return(_hammer_bread(hmp, buf_offset, HAMMER_BUFSIZE, errorp, bufferp));
+	return(_hammer_bread(hmp, buf_offset, HAMMER_BUFSIZE, 0, errorp, bufferp));
 }
 
 void *
@@ -1182,7 +1181,7 @@ hammer_bread_ext(hammer_mount_t hmp, hammer_off_t buf_offset, int bytes,
 	         int *errorp, struct hammer_buffer **bufferp)
 {
 	bytes = (bytes + HAMMER_BUFMASK) & ~HAMMER_BUFMASK;
-	return(_hammer_bread(hmp, buf_offset, bytes, errorp, bufferp));
+	return(_hammer_bread(hmp, buf_offset, bytes, 0, errorp, bufferp));
 }
 
 /*
@@ -1195,42 +1194,11 @@ hammer_bread_ext(hammer_mount_t hmp, hammer_off_t buf_offset, int bytes,
  * This function marks the buffer dirty but does not increment its
  * modify_refs count.
  */
-static __inline
-void *
-_hammer_bnew(hammer_mount_t hmp, hammer_off_t buf_offset, int bytes,
-	     int *errorp, struct hammer_buffer **bufferp)
-{
-	hammer_buffer_t buffer;
-	int32_t xoff = (int32_t)buf_offset & HAMMER_BUFMASK;
-
-	buf_offset &= ~HAMMER_BUFMASK64;
-	KKASSERT((buf_offset & HAMMER_OFF_ZONE_MASK) != 0);
-
-	buffer = *bufferp;
-	if (buffer == NULL || (buffer->zone2_offset != buf_offset &&
-			       buffer->zoneX_offset != buf_offset)) {
-		if (buffer)
-			hammer_rel_buffer(buffer, 0);
-		buffer = hammer_get_buffer(hmp, buf_offset, bytes, 1, errorp);
-		*bufferp = buffer;
-	} else {
-		*errorp = 0;
-	}
-
-	/*
-	 * Return a pointer to the buffer data.
-	 */
-	if (buffer == NULL)
-		return(NULL);
-	else
-		return((char *)buffer->ondisk + xoff);
-}
-
 void *
 hammer_bnew(hammer_mount_t hmp, hammer_off_t buf_offset,
 	     int *errorp, struct hammer_buffer **bufferp)
 {
-	return(_hammer_bnew(hmp, buf_offset, HAMMER_BUFSIZE, errorp, bufferp));
+	return(_hammer_bread(hmp, buf_offset, HAMMER_BUFSIZE, 1, errorp, bufferp));
 }
 
 void *
@@ -1238,7 +1206,7 @@ hammer_bnew_ext(hammer_mount_t hmp, hammer_off_t buf_offset, int bytes,
 		int *errorp, struct hammer_buffer **bufferp)
 {
 	bytes = (bytes + HAMMER_BUFMASK) & ~HAMMER_BUFMASK;
-	return(_hammer_bnew(hmp, buf_offset, bytes, errorp, bufferp));
+	return(_hammer_bread(hmp, buf_offset, bytes, 1, errorp, bufferp));
 }
 
 /************************************************************************
@@ -1752,13 +1720,16 @@ hammer_alloc_data(hammer_transaction_t trans, int32_t data_len,
  */
 static int hammer_sync_scan2(struct mount *mp, struct vnode *vp, void *data);
 
+struct hammer_sync_info {
+	int error;
+};
+
 int
 hammer_queue_inodes_flusher(hammer_mount_t hmp, int waitfor)
 {
 	struct hammer_sync_info info;
 
 	info.error = 0;
-	info.waitfor = waitfor;
 	if (waitfor == MNT_WAIT) {
 		vsyncscan(hmp->mp, VMSC_GETVP | VMSC_ONEPASS,
 			  hammer_sync_scan2, &info);
@@ -1789,11 +1760,9 @@ hammer_sync_hmp(hammer_mount_t hmp, int waitfor)
 		flags |= VMSC_ONEPASS;
 
 	info.error = 0;
-	info.waitfor = MNT_NOWAIT;
 	vsyncscan(hmp->mp, flags | VMSC_NOWAIT, hammer_sync_scan2, &info);
 
 	if (info.error == 0 && (waitfor & MNT_WAIT)) {
-		info.waitfor = waitfor;
 		vsyncscan(hmp->mp, flags, hammer_sync_scan2, &info);
 	}
         if (waitfor == MNT_WAIT) {

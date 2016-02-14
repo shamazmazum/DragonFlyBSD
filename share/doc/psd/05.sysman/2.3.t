@@ -9,11 +9,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
+.\" 3. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
 .\"
@@ -30,8 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)2.3.t	8.1 (Berkeley) 6/8/93
-.\" $FreeBSD: src/share/doc/psd/05.sysman/2.3.t,v 1.5 1999/08/28 00:18:19 peter Exp $
-.\" $DragonFly: src/share/doc/psd/05.sysman/2.3.t,v 1.2 2003/06/17 04:36:56 dillon Exp $
+.\" $FreeBSD: head/share/doc/psd/05.sysman/2.3.t 263142 2014-03-14 03:07:51Z eadler $
 .\"
 .sh "Interprocess communications
 .NH 3
@@ -39,7 +34,7 @@ Interprocess communication primitives
 .NH 4
 Communication domains
 .PP
-The system provides access to an extensible set of 
+The system provides access to an extensible set of
 communication \fIdomains\fP.  A communication domain
 is identified by a manifest constant defined in the
 file \fI<sys/socket.h>\fP.
@@ -319,7 +314,7 @@ Socket and protocol options
 .PP
 Sockets, and their underlying communication protocols, may
 support \fIoptions\fP.  These options may be used to manipulate
-implementation- or protocol-specific facilities. 
+implementation- or protocol-specific facilities.
 The \fIgetsockopt\fP
 and \fIsetsockopt\fP calls are used to control options:
 .DS

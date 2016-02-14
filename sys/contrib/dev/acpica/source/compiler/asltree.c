@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -157,10 +157,30 @@ TrReleaseNode (
 
 /*******************************************************************************
  *
+ * FUNCTION:    TrSetCurrentFilename
+ *
+ * PARAMETERS:  Op                  - An existing parse node
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Save the include file filename. Used for debug output only.
+ *
+ ******************************************************************************/
+
+void
+TrSetCurrentFilename (
+    ACPI_PARSE_OBJECT       *Op)
+{
+    Op->Asl.Filename = Gbl_PreviousIncludeFilename;
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    TrUpdateNode
  *
  * PARAMETERS:  ParseOpcode         - New opcode to be assigned to the node
- *              Op                - An existing parse node
+ *              Op                  - An existing parse node
  *
  * RETURN:      The updated node
  *
@@ -962,7 +982,7 @@ TrCreateNode (
     {
     case PARSEOP_ASL_CODE:
 
-        RootNode = Op;
+        Gbl_ParseTreeRoot = Op;
         Op->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         DbgPrint (ASL_PARSE_OUTPUT, "ASLCODE (Tree Completed)->");
         break;
@@ -1091,7 +1111,7 @@ TrLinkChildren (
     {
     case PARSEOP_ASL_CODE:
 
-        RootNode = Op;
+        Gbl_ParseTreeRoot = Op;
         Op->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         DbgPrint (ASL_PARSE_OUTPUT, "ASLCODE (Tree Completed)->");
         break;
@@ -1397,7 +1417,7 @@ TrWalkParseTree (
     ACPI_STATUS             Status;
 
 
-    if (!RootNode)
+    if (!Gbl_ParseTreeRoot)
     {
         return (AE_OK);
     }

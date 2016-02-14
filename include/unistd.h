@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +43,7 @@
 #endif
 
 #ifndef _GID_T_DECLARED
-typedef	__gid_t		gid_t;
+typedef	__uint32_t	gid_t;		/* XXX __gid_t */
 #define	_GID_T_DECLARED
 #endif
 
@@ -72,7 +68,7 @@ typedef	__ssize_t	ssize_t;
 #endif
 
 #ifndef _UID_T_DECLARED
-typedef	__uid_t		uid_t;
+typedef	__uint32_t	uid_t;		/* XXX __uid_t */
 #define	_UID_T_DECLARED
 #endif
 
@@ -108,10 +104,12 @@ typedef	__uid_t		uid_t;
 #define	_POSIX_THREAD_ATTR_STACKADDR	200112L
 #define	_POSIX_THREAD_ATTR_STACKSIZE	200112L
 #define	_POSIX_THREAD_CPUTIME		-1
-#define	_POSIX_THREAD_PRIO_INHERIT	200112L
-#define	_POSIX_THREAD_PRIO_PROTECT	200112L
+#define	_POSIX_THREAD_PRIO_INHERIT	200112L	/* [TPI] */
+#define	_POSIX_THREAD_PRIO_PROTECT	200112L	/* [TPP] */
 #define	_POSIX_THREAD_PRIORITY_SCHEDULING 200112L
 #define	_POSIX_THREAD_PROCESS_SHARED	-1
+#define	_POSIX_THREAD_ROBUST_PRIO_INHERIT -1	/* [RPI] */
+#define	_POSIX_THREAD_ROBUST_PRIO_PROTECT -1	/* [RPP] */
 #define	_POSIX_THREAD_SAFE_FUNCTIONS	-1
 #define	_POSIX_THREAD_SPORADIC_SERVER	-1
 #define	_POSIX_THREADS			200112L
@@ -305,6 +303,8 @@ typedef	__uid_t		uid_t;
 #define	_SC_V7_ILP32_OFFBIG	123 /* user */
 #define	_SC_V7_LP64_OFF64	124 /* user */
 #define	_SC_V7_LPBIG_OFFBIG	125 /* user */
+#define	_SC_THREAD_ROBUST_PRIO_INHERIT 126 /* user */
+#define	_SC_THREAD_ROBUST_PRIO_PROTECT 127 /* user */
 #endif
 
 /* Keys for the confstr(3) function. */

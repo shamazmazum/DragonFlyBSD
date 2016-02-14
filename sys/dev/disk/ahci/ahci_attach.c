@@ -207,7 +207,7 @@ ahci_pci_attach(device_t dev)
 	u_int irq_flags;
 	bus_addr_t addr;
 	int i, error, msi_enable, rev, fbs;
-	const char *revision;
+	char revbuf[32];
 
 	if (pci_read_config(dev, PCIR_COMMAND, 2) & 0x0400) {
 		device_printf(dev, "BIOS disabled PCI interrupt, "
@@ -396,33 +396,12 @@ ahci_pci_attach(device_t dev)
 	/* check the revision */
 	reg = ahci_read(sc, AHCI_REG_VS);
 
-	switch (reg) {
-	case AHCI_REG_VS_0_95:
-		revision = "AHCI 0.95";
-		break;
-	case AHCI_REG_VS_1_0:
-		revision = "AHCI 1.0";
-		break;
-	case AHCI_REG_VS_1_1:
-		revision = "AHCI 1.1";
-		break;
-	case AHCI_REG_VS_1_2:
-		revision = "AHCI 1.2";
-		break;
-	case AHCI_REG_VS_1_3:
-		revision = "AHCI 1.3";
-		break;
-	case AHCI_REG_VS_1_4:
-		revision = "AHCI 1.4";
-		break;
-	case AHCI_REG_VS_1_5:
-		revision = "AHCI 1.5";	/* future will catch up to us */
-		break;
-	default:
-		device_printf(sc->sc_dev,
-			      "Warning: Unknown AHCI revision 0x%08x\n", reg);
-		revision = "AHCI <unknown>";
-		break;
+	if (reg & 0x0000FF) {
+		ksnprintf(revbuf, sizeof(revbuf), "AHCI %d.%d.%d",
+			  (reg >> 16), (uint8_t)(reg >> 8), (uint8_t)reg);
+	} else {
+		ksnprintf(revbuf, sizeof(revbuf), "AHCI %d.%d",
+			  (reg >> 16), (uint8_t)(reg >> 8));
 	}
 	sc->sc_vers = reg;
 
@@ -431,7 +410,7 @@ ahci_pci_attach(device_t dev)
 		device_printf(dev,
 			      "%s cap 0x%b cap2 0x%b, %d ports, "
 			      "%d tags/port, gen %s\n",
-			      revision,
+			      revbuf,
 			      cap, AHCI_FMT_CAP,
 			      cap2, AHCI_FMT_CAP2,
 			      AHCI_REG_CAP_NP(cap), sc->sc_ncmds, gen);
@@ -440,7 +419,7 @@ ahci_pci_attach(device_t dev)
 		device_printf(dev,
 			      "%s cap 0x%b, %d ports, "
 			      "%d tags/port, gen %s\n",
-			      revision,
+			      revbuf,
 			      cap, AHCI_FMT_CAP,
 			      AHCI_REG_CAP_NP(cap), sc->sc_ncmds, gen);
 	}

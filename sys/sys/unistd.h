@@ -10,7 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -50,34 +50,34 @@
  * the POSIX standard; however, if the relevant sysconf() function
  * returns -1, the functions may be stubbed out.
  */
-#define	_POSIX_ADVISORY_INFO		-1
-#define	_POSIX_ASYNCHRONOUS_IO		0
-#define	_POSIX_BARRIERS			200112L
+#define	_POSIX_ADVISORY_INFO		-1	/* [ADV] */
+#define	_POSIX_ASYNCHRONOUS_IO		0	/* mandatory */
+#define	_POSIX_BARRIERS			200112L	/* mandatory */
 #define	_POSIX_CHOWN_RESTRICTED		1
-#define	_POSIX_CLOCK_SELECTION		-1
-#define	_POSIX_CPUTIME			-1
-#define	_POSIX_FSYNC			200112L
+#define	_POSIX_CLOCK_SELECTION		-1	/* XXX mandatory */
+#define	_POSIX_CPUTIME			-1	/* [CPT] */
+#define	_POSIX_FSYNC			200112L	/* [FSC] */
 #define	_POSIX_IPV6			0
-#define	_POSIX_JOB_CONTROL		1
-#define	_POSIX_MAPPED_FILES		200112L
-#define	_POSIX_MEMLOCK			-1
-#define	_POSIX_MEMLOCK_RANGE		200112L
-#define	_POSIX_MEMORY_PROTECTION	200112L
-#define	_POSIX_MESSAGE_PASSING		200112L
-#define	_POSIX_MONOTONIC_CLOCK		200112L
+#define	_POSIX_JOB_CONTROL		1	/* mandatory */
+#define	_POSIX_MAPPED_FILES		200112L	/* mandatory */
+#define	_POSIX_MEMLOCK			-1	/* [ML] */
+#define	_POSIX_MEMLOCK_RANGE		200112L	/* [MLR] */
+#define	_POSIX_MEMORY_PROTECTION	200112L	/* mandatory */
+#define	_POSIX_MESSAGE_PASSING		200112L	/* [MSG] */
+#define	_POSIX_MONOTONIC_CLOCK		200112L	/* [MON] */
 #define	_POSIX_NO_TRUNC			1
-#define	_POSIX_PRIORITIZED_IO		-1
-#define	_POSIX_PRIORITY_SCHEDULING	200112L
-#define	_POSIX_RAW_SOCKETS		200112L
-#define	_POSIX_REALTIME_SIGNALS		200112L
-#define	_POSIX_SEMAPHORES		200112L
-#define	_POSIX_SHARED_MEMORY_OBJECTS	200112L
-#define	_POSIX_SPIN_LOCKS		200112L
-#define	_POSIX_SPORADIC_SERVER		-1
-#define	_POSIX_SYNCHRONIZED_IO		-1
-#define	_POSIX_TIMEOUTS			200112L
-#define	_POSIX_TIMERS			200112L
-#define	_POSIX_TYPED_MEMORY_OBJECTS	-1
+#define	_POSIX_PRIORITIZED_IO		-1	/* [PIO] */
+#define	_POSIX_PRIORITY_SCHEDULING	200112L	/* [PS] */
+#define	_POSIX_RAW_SOCKETS		200112L	/* [RS] */
+#define	_POSIX_REALTIME_SIGNALS		200112L	/* mandatory */
+#define	_POSIX_SEMAPHORES		200112L	/* mandatory */
+#define	_POSIX_SHARED_MEMORY_OBJECTS	200112L	/* [SHM] */
+#define	_POSIX_SPIN_LOCKS		200112L	/* mandatory */
+#define	_POSIX_SPORADIC_SERVER		-1	/* [SS] */
+#define	_POSIX_SYNCHRONIZED_IO		-1	/* [SIO] */
+#define	_POSIX_TIMEOUTS			200112L	/* mandatory */
+#define	_POSIX_TIMERS			200112L	/* mandatory */
+#define	_POSIX_TYPED_MEMORY_OBJECTS	-1	/* [TYM] */
 #define	_POSIX_VDISABLE			0xff
 
 #if __XSI_VISIBLE
@@ -89,10 +89,11 @@
  * Although we have saved user/group IDs, we do not use them in setuid
  * as described in POSIX 1003.1, because the feature does not work for
  * root.  We use the saved IDs in seteuid/setegid, which are not currently
- * part of the POSIX 1003.1 specification.  XXX revisit for 1003.1-2001
- * as this is now mandatory.
+ * part of the POSIX 1003.1 specification.  See comments in kern_prot.c.
+ *
+ * XXX revisit for 1003.1-2008 as this is now mandatory since 1003.1-2001.
  */
-#ifdef _NOT_AVAILABLE
+#if 0
 #define	_POSIX_SAVED_IDS	1 /* saved set-user-ID and set-group-ID */
 #endif
 
@@ -148,6 +149,10 @@
 #define	_PC_REC_MIN_XFER_SIZE	16
 #define	_PC_REC_XFER_ALIGN	17
 #define	_PC_SYMLINK_MAX		18
+#endif
+
+#if __POSIX_VISIBLE >= 200809
+#define	_PC_2_SYMLINKS		22
 #endif
 
 #if __BSD_VISIBLE

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 François Tigeot
+ * Copyright (c) 2014-2016 François Tigeot
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,12 +45,12 @@
 struct pci_bus;
 
 struct pci_device_id {
-	uint32_t class;
-	uint32_t class_mask;
 	uint32_t vendor;
 	uint32_t device;
 	uint32_t subvendor;
 	uint32_t subdevice;
+	uint32_t class;
+	uint32_t class_mask;
 	unsigned long driver_data;
 };
 
@@ -62,6 +62,10 @@ struct pci_dev {
 	unsigned short device;		/* device ID */
 	unsigned short subsystem_vendor;
 	unsigned short subsystem_device;
+
+	u8 revision;
+
+	unsigned int irq;
 };
 
 struct pci_bus {
@@ -69,7 +73,6 @@ struct pci_bus {
 	struct device *dev;		/* handle to dev */
 
 	unsigned char number;		/* bus addr number */
-//	unsigned char max_bus_speed;	/* max bus speed */
 };
 
 #define PCI_DEVFN(slot, func)   ((((slot) & 0x1f) << 3) | ((func) & 0x07))
@@ -265,6 +268,22 @@ pci_resource_len(struct pci_dev *pdev, int bar)
 		pdev->device, PCIR_BAR(bar), rman_get_size(rle->res));
 
 	return  rman_get_size(rle->res);
+}
+
+static inline void __iomem *pci_iomap(struct pci_dev *dev, int bar, unsigned long maxlen)
+{
+	resource_size_t base, size;
+
+	base = pci_resource_start(dev, bar);
+	size = pci_resource_len(dev, bar);
+
+	if (base == 0)
+		return NULL;
+
+	if (maxlen && size > maxlen)
+		size = maxlen;
+
+	return ioremap(base, size);
 }
 
 #endif /* LINUX_PCI_H */
